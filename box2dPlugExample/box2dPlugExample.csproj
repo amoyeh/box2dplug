@@ -23,6 +23,8 @@
     <Service Include="{4A0DDDB5-7A95-4FBF-97CC-616D07737A77}" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="lib\box2dPlug.min.js" />
+    <Content Include="testFeatures\useCdn.html" />
     <Content Include="website\normalize.css" />
     <Content Include="testFeatures\basicCreate.html" />
     <Content Include="testFeatures\addRemove.html" />

@@ -1,0 +1,74 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+    <script src="https://cdn.rawgit.com/amoyeh/box2dplug/master/box2dPlug/lib/box2d.min.js"> </script>
+    <script src="https://cdn.rawgit.com/amoyeh/box2dplug/master/1.0/box2dPlug.js"> </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/3.0.9/pixi.min.js"></script>
+    <style>
+        body {
+            padding: 0px;
+            background: #FFFFFF;
+        }
+
+        #pixiScreen {
+            width: 900px;
+            height: 600px;
+            float: left;
+            margin-left: 10px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body onload="init();">
+    <script>
+
+        function init() {
+            //create a domain that contain the physic world
+            var domain = new box2dp.Domain({ x: 0, y: 10 }, 0.1);
+
+            //add a pixi renderer in div id pixiScreen
+            var pixiRenderer = new box2dp.PixiRenderer({
+                antialias: true, elementId: "pixiScreen", width: 900, height: 600
+            });
+
+            //add renderer before adding any items
+            domain.addRenderer(pixiRenderer);
+            pixiRenderer.drawFlags = box2dp.BaseRenderer.DRAW_SHAPE | box2dp.BaseRenderer.DRAW_CENTER | box2dp.BaseRenderer.DRAW_BOUNDARY;
+
+            //create static surrounding wall
+            var wallInfo = new box2dp.MakeInfo({
+                x: 450, y: 15, w: 900, h: 30, createType: box2dp.MakeInfo.MAKE_BOX_CENTER, fixedRotation: true,
+                isStatic: true, friction: 0, name: "wall", itemType: box2dp.ItemBase.SHAPE
+            });
+            //actually create the physic object in domain
+            domain.create(wallInfo);
+
+            //These wall objects share similar properties, MakeInfo object can be reused for such task.
+            wallInfo.y = 585;
+            domain.create(wallInfo);
+
+            wallInfo.x = 15; wallInfo.y = 300; wallInfo.w = 30; wallInfo.h = 600;
+            domain.create(wallInfo);
+            wallInfo.x = 885;
+            domain.create(wallInfo);
+
+            //create few boxes and circles
+            var boxInfo = new box2dp.MakeInfo({
+                x: 100, y: 100, w: 30, h: 30, angle: 0.9, createType: box2dp.MakeInfo.MAKE_BOX_CENTER, restitution: 0.5,
+                name: "myBox", itemType: box2dp.ItemBase.SHAPE
+            });
+            domain.create(boxInfo);
+
+            //enable drag & drop on testing environment on pixi
+            var tcPixi = new box2dp.DragControl(pixiRenderer);
+            tcPixi.createDragDrop();
+            domain.run(100, 25);
+
+        }
+
+    </script>
+
+    <div id="pixiScreen"></div>
+</body>
+</html>

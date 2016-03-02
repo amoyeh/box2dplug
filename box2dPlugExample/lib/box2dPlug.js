@@ -779,6 +779,158 @@ var box2dp;
 })(box2dp || (box2dp = {}));
 var box2dp;
 (function (box2dp) {
+    var DragControl = (function () {
+        function DragControl(renderer) {
+            this.domain = renderer.domain;
+            this.world = this.domain.world;
+            this.renderer = renderer;
+        }
+        DragControl.prototype.createDragDrop = function () {
+            if (this.renderer.constructor === box2dp.PixiRenderer) {
+                this.createPixiDragDrop();
+            }
+            if (this.renderer.constructor === box2dp.ThreeRenderer) {
+                this.createThreeDragDrop();
+            }
+        };
+        DragControl.prototype.removeDragDrop = function () {
+            this.renderer.useElement.removeEventListener("mousedown", this["mousedownObj"]);
+            document.removeEventListener("mousemove", this["mouseMoveObj"]);
+            document.removeEventListener("mouseup", this["mouseUpObj"]);
+        };
+        DragControl.prototype.createPixiDragDrop = function () {
+            var _this = this;
+            this.renderer.useElement.addEventListener("mousedown", this["mousedownObj"] = function (e) { _this.ddPress(e); });
+        };
+        DragControl.prototype.ddPress = function (e) {
+            var _this = this;
+            var lx = box2dp.MakeInfo.round((e.pageX - this.renderer.useElement.offsetLeft) / 30);
+            var ly = box2dp.MakeInfo.round((e.pageY - this.renderer.useElement.offsetTop) / 30);
+            var items = this.domain.itemUnderPoint(lx, ly);
+            if (items.length > 0) {
+                var clickBody = items[0].GetBody();
+                var mjDef = new box2d.b2MouseJointDef();
+                mjDef.bodyA = this.domain.groundBody;
+                mjDef.bodyB = clickBody;
+                mjDef.target.Copy(new box2d.b2Vec2(lx, ly));
+                mjDef.maxForce = 1000 * clickBody.GetMass();
+                this.mouseJoint = this.domain.world.CreateJoint(mjDef);
+                clickBody.SetAwake(true);
+            }
+            document.addEventListener("mousemove", this["mouseMoveObj"] = function (e) { _this.ddMove(e); });
+            document.addEventListener("mouseup", this["mouseUpObj"] = function (e) { _this.ddUp(e); });
+        };
+        DragControl.prototype.ddMove = function (e) {
+            var lx = box2dp.MakeInfo.round((e.pageX - this.renderer.useElement.offsetLeft) / 30);
+            var ly = box2dp.MakeInfo.round((e.pageY - this.renderer.useElement.offsetTop) / 30);
+            if (this.mouseJoint) {
+                this.mouseJoint.SetTarget(new box2d.b2Vec2(lx, ly));
+            }
+        };
+        DragControl.prototype.ddUp = function (e) {
+            if (this.mouseJoint) {
+                this.domain.world.DestroyJoint(this.mouseJoint);
+                this.mouseJoint = null;
+            }
+            document.removeEventListener("mousemove", this["mouseMoveObj"]);
+            document.removeEventListener("mouseup", this["mouseUpObj"]);
+        };
+        DragControl.prototype.tjPress = function (e) {
+            var _this = this;
+            var mx = e.pageX - this.renderer.useElement.offsetLeft;
+            var my = e.pageY - this.renderer.useElement.offsetTop;
+            var mousePt = this.renderer.getXYFromCamera(mx, my);
+            var lx = box2dp.MakeInfo.round(mousePt.x / 30);
+            var ly = box2dp.MakeInfo.round(mousePt.y / 30);
+            var items = this.domain.itemUnderPoint(lx, ly);
+            if (items.length > 0) {
+                var clickBody = items[0].GetBody();
+                var mjDef = new box2d.b2MouseJointDef();
+                mjDef.bodyA = this.domain.groundBody;
+                mjDef.bodyB = clickBody;
+                mjDef.target.Copy(new box2d.b2Vec2(lx, ly));
+                mjDef.maxForce = 1000 * clickBody.GetMass();
+                this.mouseJoint = this.domain.world.CreateJoint(mjDef);
+                clickBody.SetAwake(true);
+                console.log(clickBody);
+            }
+            document.addEventListener("mousemove", this["mouseMoveObj"] = function (e) { _this.tjMove(e); });
+            document.addEventListener("mouseup", this["mouseUpObj"] = function (e) { _this.tjUp(e); });
+        };
+        DragControl.prototype.createThreeDragDrop = function () {
+            var _this = this;
+            this.renderer.useElement.addEventListener("mousedown", this["mousedownObj"] = function (e) { _this.tjPress(e); });
+        };
+        DragControl.prototype.tjMove = function (e) {
+            var mx = e.pageX - this.renderer.useElement.offsetLeft;
+            var my = e.pageY - this.renderer.useElement.offsetTop;
+            var mousePt = this.renderer.getXYFromCamera(mx, my);
+            var lx = box2dp.MakeInfo.round(mousePt.x / 30);
+            var ly = box2dp.MakeInfo.round(mousePt.y / 30);
+            if (this.mouseJoint) {
+                this.mouseJoint.SetTarget(new box2d.b2Vec2(lx, ly));
+            }
+        };
+        DragControl.prototype.tjUp = function (e) {
+            if (this.mouseJoint) {
+                this.domain.world.DestroyJoint(this.mouseJoint);
+                this.mouseJoint = null;
+            }
+            document.removeEventListener("mousemove", this["mouseMoveObj"]);
+            document.removeEventListener("mouseup", this["mouseUpObj"]);
+        };
+        DragControl.prototype.trackCtrlUpdate = function (e, caller) {
+            caller.trackCtrl.update(e.values * 50);
+        };
+        DragControl.prototype.createTrackBallCtrl = function () {
+            var tr = this.renderer;
+            tr.camera.position.x = 0;
+            tr.camera.position.y = 0;
+            this.trackCtrl = new THREE.TrackballControls(tr.camera, tr.useElement);
+            this.trackCtrl.rotateSpeed = 2.0;
+            this.trackCtrl.zoomSpeed = 2.0;
+            this.trackCtrl.panSpeed = 2.0;
+            this.trackCtrl.dynamicDampingFactor = 0.3;
+            this.trackCtrl.staticMoving = true;
+            var offset = new THREE.Vector3(tr.options.width * .5, -tr.options.height * .5, 0);
+            this.trackCtrl.object.position.add(offset);
+            this.trackCtrl.target.add(offset);
+            this.domain.addEvent(box2dp.Event.AFTER_RENDER, this.trackCtrlUpdate, this);
+        };
+        DragControl.prototype.removeTrackBallCtrl = function () {
+            this.domain.removeEvent(box2dp.Event.AFTER_RENDER, this.trackCtrlUpdate);
+            if (this.trackCtrl) {
+                this.trackCtrl.enabled = false;
+                this.trackCtrl = undefined;
+            }
+        };
+        DragControl.prototype.orbitCtrlUpdate = function (e, caller) {
+            caller.orbCtrl.update();
+        };
+        DragControl.prototype.createOrbitCtrl = function () {
+            var tr = this.renderer;
+            this.orbCtrl = new THREE.OrbitControls(tr.camera, tr.useElement);
+            this.orbCtrl.enableDamping = true;
+            this.orbCtrl.dampingFactor = 0.2;
+            var offset = new THREE.Vector3(tr.options.width * .5, -tr.options.height * .5, 0);
+            this.orbCtrl.target = offset;
+            this.domain.addEvent(box2dp.Event.AFTER_RENDER, this.orbitCtrlUpdate, this);
+        };
+        DragControl.prototype.removeOrbitCtrl = function () {
+            this.domain.removeEvent(box2dp.Event.AFTER_RENDER, this.orbitCtrlUpdate);
+            if (this.orbCtrl) {
+                console.log(this.orbCtrl);
+                this.orbCtrl.enabled = false;
+                this.orbCtrl = undefined;
+                console.log(this.orbCtrl);
+            }
+        };
+        return DragControl;
+    })();
+    box2dp.DragControl = DragControl;
+})(box2dp || (box2dp = {}));
+var box2dp;
+(function (box2dp) {
     var BoxMaker = (function () {
         function BoxMaker(world) {
             this.world = world;
@@ -1190,158 +1342,6 @@ var box2dp;
         return BaseRenderer;
     })();
     box2dp.BaseRenderer = BaseRenderer;
-})(box2dp || (box2dp = {}));
-var box2dp;
-(function (box2dp) {
-    var DragControl = (function () {
-        function DragControl(renderer) {
-            this.domain = renderer.domain;
-            this.world = this.domain.world;
-            this.renderer = renderer;
-        }
-        DragControl.prototype.createDragDrop = function () {
-            if (this.renderer.constructor["name"] == "PixiRenderer") {
-                this.createPixiDragDrop();
-            }
-            if (this.renderer.constructor["name"] == "ThreeRenderer") {
-                this.createThreeDragDrop();
-            }
-        };
-        DragControl.prototype.removeDragDrop = function () {
-            this.renderer.useElement.removeEventListener("mousedown", this["mousedownObj"]);
-            document.removeEventListener("mousemove", this["mouseMoveObj"]);
-            document.removeEventListener("mouseup", this["mouseUpObj"]);
-        };
-        DragControl.prototype.createPixiDragDrop = function () {
-            var _this = this;
-            this.renderer.useElement.addEventListener("mousedown", this["mousedownObj"] = function (e) { _this.ddPress(e); });
-        };
-        DragControl.prototype.ddPress = function (e) {
-            var _this = this;
-            var lx = box2dp.MakeInfo.round((e.pageX - this.renderer.useElement.offsetLeft) / 30);
-            var ly = box2dp.MakeInfo.round((e.pageY - this.renderer.useElement.offsetTop) / 30);
-            var items = this.domain.itemUnderPoint(lx, ly);
-            if (items.length > 0) {
-                var clickBody = items[0].GetBody();
-                var mjDef = new box2d.b2MouseJointDef();
-                mjDef.bodyA = this.domain.groundBody;
-                mjDef.bodyB = clickBody;
-                mjDef.target.Copy(new box2d.b2Vec2(lx, ly));
-                mjDef.maxForce = 1000 * clickBody.GetMass();
-                this.mouseJoint = this.domain.world.CreateJoint(mjDef);
-                clickBody.SetAwake(true);
-            }
-            document.addEventListener("mousemove", this["mouseMoveObj"] = function (e) { _this.ddMove(e); });
-            document.addEventListener("mouseup", this["mouseUpObj"] = function (e) { _this.ddUp(e); });
-        };
-        DragControl.prototype.ddMove = function (e) {
-            var lx = box2dp.MakeInfo.round((e.pageX - this.renderer.useElement.offsetLeft) / 30);
-            var ly = box2dp.MakeInfo.round((e.pageY - this.renderer.useElement.offsetTop) / 30);
-            if (this.mouseJoint) {
-                this.mouseJoint.SetTarget(new box2d.b2Vec2(lx, ly));
-            }
-        };
-        DragControl.prototype.ddUp = function (e) {
-            if (this.mouseJoint) {
-                this.domain.world.DestroyJoint(this.mouseJoint);
-                this.mouseJoint = null;
-            }
-            document.removeEventListener("mousemove", this["mouseMoveObj"]);
-            document.removeEventListener("mouseup", this["mouseUpObj"]);
-        };
-        DragControl.prototype.tjPress = function (e) {
-            var _this = this;
-            var mx = e.pageX - this.renderer.useElement.offsetLeft;
-            var my = e.pageY - this.renderer.useElement.offsetTop;
-            var mousePt = this.renderer.getXYFromCamera(mx, my);
-            var lx = box2dp.MakeInfo.round(mousePt.x / 30);
-            var ly = box2dp.MakeInfo.round(mousePt.y / 30);
-            var items = this.domain.itemUnderPoint(lx, ly);
-            if (items.length > 0) {
-                var clickBody = items[0].GetBody();
-                var mjDef = new box2d.b2MouseJointDef();
-                mjDef.bodyA = this.domain.groundBody;
-                mjDef.bodyB = clickBody;
-                mjDef.target.Copy(new box2d.b2Vec2(lx, ly));
-                mjDef.maxForce = 1000 * clickBody.GetMass();
-                this.mouseJoint = this.domain.world.CreateJoint(mjDef);
-                clickBody.SetAwake(true);
-                console.log(clickBody);
-            }
-            document.addEventListener("mousemove", this["mouseMoveObj"] = function (e) { _this.tjMove(e); });
-            document.addEventListener("mouseup", this["mouseUpObj"] = function (e) { _this.tjUp(e); });
-        };
-        DragControl.prototype.createThreeDragDrop = function () {
-            var _this = this;
-            this.renderer.useElement.addEventListener("mousedown", this["mousedownObj"] = function (e) { _this.tjPress(e); });
-        };
-        DragControl.prototype.tjMove = function (e) {
-            var mx = e.pageX - this.renderer.useElement.offsetLeft;
-            var my = e.pageY - this.renderer.useElement.offsetTop;
-            var mousePt = this.renderer.getXYFromCamera(mx, my);
-            var lx = box2dp.MakeInfo.round(mousePt.x / 30);
-            var ly = box2dp.MakeInfo.round(mousePt.y / 30);
-            if (this.mouseJoint) {
-                this.mouseJoint.SetTarget(new box2d.b2Vec2(lx, ly));
-            }
-        };
-        DragControl.prototype.tjUp = function (e) {
-            if (this.mouseJoint) {
-                this.domain.world.DestroyJoint(this.mouseJoint);
-                this.mouseJoint = null;
-            }
-            document.removeEventListener("mousemove", this["mouseMoveObj"]);
-            document.removeEventListener("mouseup", this["mouseUpObj"]);
-        };
-        DragControl.prototype.trackCtrlUpdate = function (e, caller) {
-            caller.trackCtrl.update(e.values * 50);
-        };
-        DragControl.prototype.createTrackBallCtrl = function () {
-            var tr = this.renderer;
-            tr.camera.position.x = 0;
-            tr.camera.position.y = 0;
-            this.trackCtrl = new THREE.TrackballControls(tr.camera, tr.useElement);
-            this.trackCtrl.rotateSpeed = 2.0;
-            this.trackCtrl.zoomSpeed = 2.0;
-            this.trackCtrl.panSpeed = 2.0;
-            this.trackCtrl.dynamicDampingFactor = 0.3;
-            this.trackCtrl.staticMoving = true;
-            var offset = new THREE.Vector3(tr.options.width * .5, -tr.options.height * .5, 0);
-            this.trackCtrl.object.position.add(offset);
-            this.trackCtrl.target.add(offset);
-            this.domain.addEvent(box2dp.Event.AFTER_RENDER, this.trackCtrlUpdate, this);
-        };
-        DragControl.prototype.removeTrackBallCtrl = function () {
-            this.domain.removeEvent(box2dp.Event.AFTER_RENDER, this.trackCtrlUpdate);
-            if (this.trackCtrl) {
-                this.trackCtrl.enabled = false;
-                this.trackCtrl = undefined;
-            }
-        };
-        DragControl.prototype.orbitCtrlUpdate = function (e, caller) {
-            caller.orbCtrl.update();
-        };
-        DragControl.prototype.createOrbitCtrl = function () {
-            var tr = this.renderer;
-            this.orbCtrl = new THREE.OrbitControls(tr.camera, tr.useElement);
-            this.orbCtrl.enableDamping = true;
-            this.orbCtrl.dampingFactor = 0.2;
-            var offset = new THREE.Vector3(tr.options.width * .5, -tr.options.height * .5, 0);
-            this.orbCtrl.target = offset;
-            this.domain.addEvent(box2dp.Event.AFTER_RENDER, this.orbitCtrlUpdate, this);
-        };
-        DragControl.prototype.removeOrbitCtrl = function () {
-            this.domain.removeEvent(box2dp.Event.AFTER_RENDER, this.orbitCtrlUpdate);
-            if (this.orbCtrl) {
-                console.log(this.orbCtrl);
-                this.orbCtrl.enabled = false;
-                this.orbCtrl = undefined;
-                console.log(this.orbCtrl);
-            }
-        };
-        return DragControl;
-    })();
-    box2dp.DragControl = DragControl;
 })(box2dp || (box2dp = {}));
 var box2dp;
 (function (box2dp) {

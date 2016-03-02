@@ -20,11 +20,6 @@
             this.renderer.backgroundColor = this.colorClass.BACKGROUND;
 
             this.useElement.appendChild(this.renderer.view);
-
-            //if (renderer.constructor["name"] == "PixiRenderer") {
-            //    (<PixiRenderer>renderer).renderer.backgroundColor = Color.BACKGROUND;
-            //}
-
             this.scene = new PIXI.Container();
             this.container = new PIXI.Container();
             this.scene.addChild(this.container);

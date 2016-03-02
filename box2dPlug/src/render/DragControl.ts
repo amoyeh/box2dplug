@@ -17,10 +17,10 @@
         }
 
         public createDragDrop(): void {
-            if (this.renderer.constructor["name"] == "PixiRenderer") {
+            if (this.renderer.constructor === box2dp.PixiRenderer) {
                 this.createPixiDragDrop();
             }
-            if (this.renderer.constructor["name"] == "ThreeRenderer") {
+            if (this.renderer.constructor === box2dp.ThreeRenderer) {
                 this.createThreeDragDrop();
             }
         }

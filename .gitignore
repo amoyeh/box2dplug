@@ -2,6 +2,7 @@
 box2dPlug_website_setup/
 box2dPlugSite/
 box2dPlug/.vs
+box2dPlug/packages
 box2dPlug/bin
 box2dPlug/obj
 box2dPlug/todo.txt

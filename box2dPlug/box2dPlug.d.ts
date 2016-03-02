@@ -226,6 +226,34 @@ declare module box2dp {
     }
 }
 declare module box2dp {
+    class DragControl {
+        private domain;
+        private world;
+        private useElement;
+        private renderer;
+        mouseJoint: any;
+        trackCtrl: THREE.TrackballControls;
+        orbCtrl: THREE.OrbitControls;
+        constructor(renderer: BaseRenderer);
+        createDragDrop(): void;
+        removeDragDrop(): void;
+        private createPixiDragDrop();
+        private ddPress(e);
+        private ddMove(e);
+        private ddUp(e);
+        private tjPress(e);
+        private createThreeDragDrop();
+        private tjMove(e);
+        private tjUp(e);
+        trackCtrlUpdate(e: Event, caller: DragControl): void;
+        createTrackBallCtrl(): void;
+        removeTrackBallCtrl(): void;
+        orbitCtrlUpdate(e: Event, caller: DragControl): void;
+        createOrbitCtrl(): void;
+        removeOrbitCtrl(): void;
+    }
+}
+declare module box2dp {
     class BoxMaker {
         world: box2d.b2World;
         constructor(world: box2d.b2World);
@@ -355,34 +383,6 @@ declare module box2dp {
         render(): void;
         onItemCreate(item: ItemEntity): void;
         onItemRemove(item: ItemEntity): void;
-    }
-}
-declare module box2dp {
-    class DragControl {
-        private domain;
-        private world;
-        private useElement;
-        private renderer;
-        mouseJoint: any;
-        trackCtrl: THREE.TrackballControls;
-        orbCtrl: THREE.OrbitControls;
-        constructor(renderer: BaseRenderer);
-        createDragDrop(): void;
-        removeDragDrop(): void;
-        private createPixiDragDrop();
-        private ddPress(e);
-        private ddMove(e);
-        private ddUp(e);
-        private tjPress(e);
-        private createThreeDragDrop();
-        private tjMove(e);
-        private tjUp(e);
-        trackCtrlUpdate(e: Event, caller: DragControl): void;
-        createTrackBallCtrl(): void;
-        removeTrackBallCtrl(): void;
-        orbitCtrlUpdate(e: Event, caller: DragControl): void;
-        createOrbitCtrl(): void;
-        removeOrbitCtrl(): void;
     }
 }
 declare module box2dp {
