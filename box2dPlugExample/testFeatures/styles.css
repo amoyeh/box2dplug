@@ -1,0 +1,27 @@
+﻿body {
+    padding: 0px;
+    background: #FFFFFF;
+}
+
+#pixiScreen, #threeScreen, #canvasScreen {
+    width: 900px;
+    height: 600px;
+    float: left;
+    margin-left: 10px;
+    margin-top: 10px;
+}
+
+.clearFloat:after {
+    content: "";
+    display: table;
+    clear: both;
+}
+
+input[type=button] {
+    padding: 10px;
+}
+
+.toolDiv {
+    margin-left: 10px;
+    margin-top: 10px;
+}
