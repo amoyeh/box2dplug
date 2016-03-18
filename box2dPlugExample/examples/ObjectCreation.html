@@ -1,0 +1,78 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <meta charset="utf-8" />
+    <script src="../../lib/box2d.min.js"></script>
+    <script src="../../lib/pixi.min.js"></script>
+    <script src="../../lib/box2dPlug.min.js"></script>
+    <style>
+        body, html {
+            padding: 0px;
+            margin: 0px;
+        }
+    </style>
+
+    <script>
+
+        function init() {
+
+            //create a domain object that contain physic world, with gravity {x:0, y:10},  world step time set to 0.1
+            var domain = new box2dp.Domain({ x: 0, y: 10 }, 0.1);
+
+            //add a pixi renderer in div id pixiScreen
+            var pixiRenderer = new box2dp.PixiRenderer({
+                antialias: false, elementId: "pixiScreen", width: 900, height: 500, transparent: false, backgroundColor: 0xF5F5F5
+            });
+
+            //add pixiRenderer to the domain
+            domain.addRenderer(pixiRenderer);
+
+            //set pixiRenderer draw everything
+            pixiRenderer.drawFlags = box2dp.BaseRenderer.DRAW_ALL;
+
+            //enable drag & drop on pixi testing environment
+            var dragDropPixi = new box2dp.DragControl(pixiRenderer);
+            dragDropPixi.createDragDrop();
+
+
+            //makeInfo contain the commands of how to create the physic entity
+            //first create a static wall on the top
+            //for quick web based physic environmemnt, we use pixels based measurement
+            var wallInfo = new box2dp.MakeInfo({
+                x: 450, y: 50, w: 800, h: 30, createType: box2dp.MakeInfo.MAKE_BOX_CENTER, fixedRotation: true,
+                isStatic: true, friction: 0
+            });
+            //create the physic object in domain
+            domain.create(wallInfo);
+
+
+            //wallInfo can be reused to create different objects
+            //create other wall at bottom, only need to change the wallInfo.y value, since other values are the same
+            wallInfo.y = 450;
+            domain.create(wallInfo);
+
+
+            //create a box , angle 0.5236 radians is about 30 degree
+            var boxInfo = new box2dp.MakeInfo({
+                x: 200, y: 150, w: 60, h: 60, angle: 0.5235, restitution: 0.1, createType: box2dp.MakeInfo.MAKE_BOX_CENTER
+            });
+            domain.create(boxInfo);
+
+            //create a circle , passing MakeInfo object directly
+            domain.create(new box2dp.MakeInfo({
+                x: 700, y: 150, radius: 30, restitution: 0.1, createType: box2dp.MakeInfo.MAKE_CIRCLE
+            }));
+
+            //run the simulation , update physics every 50 milliseconds , update rendering every 25 milliseconds
+            domain.run(50, 25);
+
+        }
+
+    </script>
+
+</head>
+<body onload="init();">
+    <div id="pixiScreen"></div>
+</body>
+</html>

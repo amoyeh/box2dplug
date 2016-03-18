@@ -9,11 +9,15 @@
         public mouseJoint: any;
         public trackCtrl: THREE.TrackballControls;
         public orbCtrl: THREE.OrbitControls;
+        private mousePt: box2d.b2Vec2;
+        private tweenPt: box2d.b2Vec2;
+        private dragging: boolean = false;
 
         constructor(renderer: BaseRenderer) {
             this.domain = renderer.domain;
             this.world = this.domain.world;
             this.renderer = renderer;
+            this.domain.addEvent(Event.BEFORE_STEP, this["beforeStep"] = (e) => { this.beforeStepUpdate(); });
         }
 
         public createDragDrop(): void {
@@ -41,6 +45,9 @@
         private ddPress(e): void {
             var lx = box2dp.MakeInfo.round((e.pageX - this.renderer.useElement.offsetLeft) / 30);
             var ly = box2dp.MakeInfo.round((e.pageY - this.renderer.useElement.offsetTop) / 30);
+            this.mousePt = new box2d.b2Vec2(lx, ly);
+            this.tweenPt = new box2d.b2Vec2(lx, ly);
+            this.dragging = true;
             var items = this.domain.itemUnderPoint(lx, ly);
             if (items.length > 0) {
                 var clickBody: box2d.b2Body = items[0].GetBody();
@@ -54,6 +61,7 @@
             }
             document.addEventListener("mousemove", this["mouseMoveObj"] = (e) => { this.ddMove(e); });
             document.addEventListener("mouseup", this["mouseUpObj"] = (e) => { this.ddUp(e); });
+
         }
         private ddMove(e): void {
             var lx = box2dp.MakeInfo.round((e.pageX - this.renderer.useElement.offsetLeft) / 30);
@@ -61,12 +69,14 @@
             if (this.mouseJoint) {
                 this.mouseJoint.SetTarget(new box2d.b2Vec2(lx, ly));
             }
+            this.mousePt = new box2d.b2Vec2(lx, ly);
         }
         private ddUp(e): void {
             if (this.mouseJoint) {
                 this.domain.world.DestroyJoint(this.mouseJoint);
                 this.mouseJoint = null;
             }
+            this.dragging = false;
             document.removeEventListener("mousemove", this["mouseMoveObj"]);
             document.removeEventListener("mouseup", this["mouseUpObj"]);
         }
@@ -83,6 +93,9 @@
             var mousePt: THREE.Vector3 = (<ThreeRenderer>this.renderer).getXYFromCamera(mx, my);
             var lx = box2dp.MakeInfo.round(mousePt.x / 30);
             var ly = box2dp.MakeInfo.round(mousePt.y / 30);
+            this.mousePt = new box2d.b2Vec2(lx, ly);
+            this.tweenPt = new box2d.b2Vec2(lx, ly);
+            this.dragging = true;
             var items = this.domain.itemUnderPoint(lx, ly);
             if (items.length > 0) {
                 var clickBody: box2d.b2Body = items[0].GetBody();
@@ -93,7 +106,6 @@
                 mjDef.maxForce = 1000 * clickBody.GetMass();
                 this.mouseJoint = this.domain.world.CreateJoint(mjDef);
                 clickBody.SetAwake(true);
-                console.log(clickBody);
             }
             document.addEventListener("mousemove", this["mouseMoveObj"] = (e) => { this.tjMove(e); });
             document.addEventListener("mouseup", this["mouseUpObj"] = (e) => { this.tjUp(e); });
@@ -107,6 +119,7 @@
             var mousePt: THREE.Vector3 = (<ThreeRenderer>this.renderer).getXYFromCamera(mx, my);
             var lx = box2dp.MakeInfo.round(mousePt.x / 30);
             var ly = box2dp.MakeInfo.round(mousePt.y / 30);
+            this.mousePt = new box2d.b2Vec2(lx, ly);
             if (this.mouseJoint) {
                 this.mouseJoint.SetTarget(new box2d.b2Vec2(lx, ly));
             }
@@ -118,6 +131,7 @@
             }
             document.removeEventListener("mousemove", this["mouseMoveObj"]);
             document.removeEventListener("mouseup", this["mouseUpObj"]);
+            this.dragging = false;
         }
 
    
@@ -177,13 +191,48 @@
         public removeOrbitCtrl(): void {
             this.domain.removeEvent(Event.AFTER_RENDER, this.orbitCtrlUpdate);
             if (this.orbCtrl) {
-                console.log(this.orbCtrl);
+                //console.log(this.orbCtrl);
                 this.orbCtrl.enabled = false;
                 this.orbCtrl = undefined;
-                console.log(this.orbCtrl);
+                //console.log(this.orbCtrl);
             }
         }
 
+
+
+        ////////////////////////////////////////////////////////////////
+        //particle controls
+        ////////////////////////////////////////////////////////////////
+        public beforeStepUpdate(): void {
+            //if particle enabled
+            if (this.renderer.domain.particleSystems.length > 0 && this.dragging) {
+
+                var xDiff: number = (this.mousePt.x - this.tweenPt.x) * .5;
+                var yDiff: number = (this.mousePt.y - this.tweenPt.y) * .5;
+                this.tweenPt.x += xDiff;
+                this.tweenPt.y += yDiff;
+
+                var dragForce: box2d.b2Vec2 = new box2d.b2Vec2(xDiff, yDiff);
+                dragForce.SelfMul(50);
+
+                var qcb: any = new QueryCallBack();
+                var aabb = new box2d.b2AABB();
+                aabb.lowerBound.Set(this.tweenPt.x - 1, this.tweenPt.y - 1);
+                aabb.upperBound.Set(this.tweenPt.x + 1, this.tweenPt.y + 1);
+                this.domain.world.QueryAABB(qcb, aabb);
+                var plen = qcb.particleData.length;
+                if (plen > 0) {
+                    for (var k: number = 0; k < plen; k++) {
+                        var atIndex: number = qcb.particleData[k].index;
+                        var system: box2d.b2ParticleSystem = qcb.particleData[k].system;
+                        var pt: box2d.b2Vec2 = system.GetPositionBuffer()[atIndex];
+                        var v = system.GetVelocityBuffer()[atIndex];
+                        v.Copy(dragForce);
+                    }
+                }
+
+            }
+        }
 
     }
 }

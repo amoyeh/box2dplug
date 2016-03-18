@@ -1,22 +1,14 @@
 ﻿module box2dp {
 
-    interface CreateChainResult {
-        bodies?: box2d.b2Body[];
-        revoulteJoints?: box2d.b2Joint[];
-        ropeJoint?: box2d.b2Joint;
-        headPin?: box2d.b2Body;
-        headJoint?: box2d.b2RevoluteJoint;
-        tailPin?: box2d.b2Body;
-        tailJoint?: box2d.b2RevoluteJoint;
-    }
-
     export class BoxMaker {
 
         //world reference
         public world: box2d.b2World;
+        public domain: Domain;
 
-        constructor(world: box2d.b2World) {
+        constructor(world: box2d.b2World, domain: Domain) {
             this.world = world;
+            this.domain = domain;
         }
 
         public create(info: MakeInfo): box2d.b2Body {
@@ -76,7 +68,6 @@
             if (useInfo.userData) body.SetUserData(useInfo.userData);
             body.SetPositionXY(useInfo.x, useInfo.y);
             return body;
-            
         }
 
         public createEdge(body: box2d.b2Body, useInfo: MakeInfo): box2d.b2Fixture[] {
@@ -209,52 +200,55 @@
             return body;
         }
 
-        public createChain(info: {
-            w: number, h: number, amt: number, x: number, y: number, degree: number,
-            pinHead?: boolean, pinTail?: boolean, collideConnected?: boolean, density?: number, overLapGap?: number
-        }): any {
+        //create the itemEntity and add to domain, fire render event
+        public createItemEntity(makeInfo: MakeInfo, name: string): ItemEntity {
+            var newItem = new ItemEntity(this.create(makeInfo), makeInfo.itemType, name);
+            this.domain.items.push(newItem);
+            for (var p: number = 0; p < this.domain.rlen; p++) this.domain.renderers[p].onItemCreate(newItem);
+            this.domain.fireEvent(new Event(Event.ITEM_CREATED, this.domain, newItem));
+            return newItem;
+        }
 
-            var angle: number = info.degree * 0.0174533;
-            if (!info.overLapGap) info.overLapGap = 5;
-            if (!info.pinHead) info.pinHead = false;
-            if (!info.pinTail) info.pinTail = false;
-            if (!info.collideConnected) info.collideConnected = false;
-            if (!info.density) info.density = 1;
+        public createChain(baseName: string, info: MakeInfo): { segments: ItemEntity[], pins: ItemEntity[] } {
+
+            if (!info.angle) info.angle = 0;
+            if (!info.chainOverlap) info.chainOverlap = 5;
+            if (info.chainPinHead == null) info.chainPinHead = false;
+            if (info.chainPinTail == null) info.chainPinTail = false;
+            if (info.chainCollideConnected == null) info.chainCollideConnected = false;
 
             //revolute join to connect entire rope sections
             var ropeRevoluteD: box2d.b2RevoluteJointDef = new box2d.b2RevoluteJointDef();
-            ropeRevoluteD.collideConnected = info.collideConnected;
+            ropeRevoluteD.collideConnected = info.chainCollideConnected;
 
             var previous: box2d.b2Body;
-            var boxInfo: MakeInfo = new MakeInfo({ w: info.h, h: info.w, angle: angle, createType: MakeInfo.MAKE_BOX_CENTER, density: info.density });
-
-            var result: CreateChainResult = {};
+            var boxInfo = new MakeInfo({ w: info.h, h: info.w, angle: info.angle, createType: MakeInfo.MAKE_BOX_CENTER, density: info.density });
+            var result: { segments: ItemEntity[], pins: ItemEntity[] } = { segments: [], pins: [] };
             var firstBody: box2d.b2Body;
             var lastBody: box2d.b2Body;
-            result.bodies = [];
-            result.revoulteJoints = [];
 
-            for (var k: number = 0; k < info.amt; k++) {
+            for (var k: number = 0; k < info.chainAmt; k++) {
 
-                var angleAddX: number = (Math.cos(angle) * (info.h - info.overLapGap));
-                var angleAddY: number = (Math.sin(angle) * (info.h - info.overLapGap));
+                var angleAddX: number = (Math.cos(info.angle) * (info.h - info.chainOverlap));
+                var angleAddY: number = (Math.sin(info.angle) * (info.h - info.chainOverlap));
                 boxInfo.x = info.x + angleAddX * k;
                 boxInfo.y = info.y + angleAddY * k;
 
-                var madeBody = this.create(boxInfo);
-                result.bodies.push(madeBody);
-                if (k == 0) firstBody = madeBody;
-                if (k == info.amt - 1) lastBody = madeBody;
+                var newItem = this.createItemEntity(boxInfo, baseName + ".c." + k);
+
+                result.segments.push(newItem);
+
+                if (k == 0) firstBody = newItem.b2body;
+                if (k == info.chainAmt - 1) lastBody = newItem.b2body;
 
                 if (previous) {
-                    var anchor = madeBody.GetPosition().Clone();
-                    anchor.x -= (Math.cos(angle) * info.h) / 60; //half of the rope height plus angle offset
-                    anchor.y -= (Math.sin(angle) * info.h) / 60; //half of the rope height plus angle offset
-                    ropeRevoluteD.Initialize(previous, madeBody, anchor);
+                    var anchor = newItem.b2body.GetPosition().Clone();
+                    anchor.x -= (Math.cos(info.angle) * info.h) / 60; //half of the rope height plus angle offset
+                    anchor.y -= (Math.sin(info.angle) * info.h) / 60; //half of the rope height plus angle offset
+                    ropeRevoluteD.Initialize(previous, newItem.b2body, anchor);
                     this.world.CreateJoint(ropeRevoluteD);
-                    result.revoulteJoints.push(this.world.CreateJoint(ropeRevoluteD));
                 }
-                previous = madeBody;
+                previous = newItem.b2body;
 
             }
 
@@ -266,36 +260,110 @@
             //second anchor is the last part of the rope body, add half of its height
             ropeJointD.localAnchorB = new box2d.b2Vec2(0, 0);
             //maxLength = distance between ropeTop and last part of the rope, plus half of the rope body height
-            ropeJointD.maxLength = MakeInfo.round((info.h - info.overLapGap) * info.amt / 30);
+            ropeJointD.maxLength = MakeInfo.round((info.h - info.chainOverlap) * info.chainAmt / 30);
             //last rope part
             ropeJointD.bodyB = lastBody;
-            result.ropeJoint = this.world.CreateJoint(ropeJointD);
+            this.world.CreateJoint(ropeJointD);
 
-            if (info.pinHead) {
+            if (info.chainPinHead) {
                 //create a static item to pin on the head
                 var cirInfo: MakeInfo = new MakeInfo({ x: info.x, y: info.y, radius: 4, createType: MakeInfo.MAKE_CIRCLE, isStatic: true });
-                var headCircle = this.create(cirInfo);
-                ropeRevoluteD.Initialize(headCircle, firstBody, headCircle.GetPosition().Clone());
-                result.headPin = headCircle;
-                result.headJoint = <box2d.b2RevoluteJoint> this.world.CreateJoint(ropeRevoluteD);
+                var headCircle = this.createItemEntity(cirInfo, baseName + ".head");
+                ropeRevoluteD.Initialize(headCircle.b2body, firstBody, headCircle.b2body.GetPosition().Clone());
+                this.world.CreateJoint(ropeRevoluteD);
             }
 
-            if (info.pinTail) {
+            if (info.chainPinTail) {
                 //create a static item to pin on the head
                 var lx: number = lastBody.GetPosition().x * 30;
                 var ly: number = lastBody.GetPosition().y * 30;
                 var cirInfo: MakeInfo = new MakeInfo({ x: lx, y: ly, radius: 4, createType: MakeInfo.MAKE_CIRCLE, isStatic: true });
-                var tailCircle = this.create(cirInfo);
-                ropeRevoluteD.Initialize(tailCircle, lastBody, tailCircle.GetPosition().Clone());
+                var tailCircle = this.createItemEntity(cirInfo, baseName + ".tail");
+                ropeRevoluteD.Initialize(tailCircle.b2body, lastBody, tailCircle.b2body.GetPosition().Clone());
                 this.world.CreateJoint(ropeRevoluteD);
-                result.tailPin = tailCircle;
-                result.tailJoint = <box2d.b2RevoluteJoint> this.world.CreateJoint(ropeRevoluteD);
             }
 
             return result;
 
         }
 
+        public createParticle(system: box2d.b2ParticleSystem, def: box2d.b2ParticleDef, colorDef?: { color: number, alpha: number }): ItemParticle {
+            //clone the definition
+            var udef = new box2d.b2ParticleDef();
+            udef.flags = def.flags;
+            //make sure destroy event fires
+            udef.flags |= box2d.b2ParticleFlag.b2_destructionListenerParticle;
+            udef.lifetime = def.lifetime;
+            udef.position = def.position.Clone();
+            udef.velocity = def.velocity.Clone();
+            var ip: ItemParticle = new box2dp.ItemParticle();
+            udef["userData"] = ip;
+            if (colorDef) {
+                ip.uniqueColor = colorDef.color;
+                ip.uniqueAlpha = colorDef.alpha;
+            }
+            var atIndex: number = system.CreateParticle(udef);
+            ip.init(system, null, atIndex);
+            this.domain.particles[system.name].push(ip);
+            this.domain.fireEvent(new Event(Event.PARTICLE_CREATED, this, { itemParticle: ip }));
+            for (var k: number = 0; k < this.domain.rlen; k++) this.domain.renderers[k].onParticleCreate(ip);
+            return ip;
+        }
+
+        public fillParticles(system: box2d.b2ParticleSystem, def: box2d.b2ParticleDef, w: number, h: number): ItemParticle[] {
+            var result: ItemParticle[] = [];
+            var sx: number = def.position.x;
+            var sy: number = def.position.y;
+            var r: number = system.GetRadius() * 2;
+            for (var lx: number = 0; lx < w; lx++) {
+                for (var ly: number = 0; ly < h; ly++) {
+                    var atx: number = sx + (r * lx);
+                    var aty: number = sy + (r * ly);
+                    var udef = new box2d.b2ParticleDef();
+                    udef.flags = def.flags;
+                    udef.flags |= box2d.b2ParticleFlag.b2_destructionListenerParticle;
+                    udef.lifetime = def.lifetime;
+                    udef.position = new box2d.b2Vec2(atx, aty);
+                    udef.velocity = def.velocity.Clone();
+                    var ip: ItemParticle = new box2dp.ItemParticle();
+                    udef["userData"] = ip;
+                    var atIndex: number = system.CreateParticle(udef);
+                    ip.init(system, null, atIndex);
+                    this.domain.particles[system.name].push(ip);
+                    this.domain.fireEvent(new Event(Event.PARTICLE_CREATED, this, { itemParticle: ip }));
+                    for (var k: number = 0; k < this.domain.rlen; k++) this.domain.renderers[k].onParticleCreate(ip);
+                    result.push(ip);
+                }
+            }
+            return result;
+        }
+
+        public createParticleGroup(system: box2d.b2ParticleSystem, def: box2d.b2ParticleGroupDef, beforeCreationCall?: Function): box2d.b2ParticleGroup {
+          
+            //make sure destroy event fires
+            def.flags |= box2d.b2ParticleFlag.b2_destructionListenerParticle;
+            var group: box2d.b2ParticleGroup = system.CreateParticleGroup(def);
+
+            var posInfo: box2d.b2Vec2[] = system.GetPositionBuffer();
+            var userInfo: ItemParticle[] = system.GetUserDataBuffer();
+
+            var i: number = group.GetBufferIndex();
+            var total: number = i + group.GetParticleCount();
+            for (; i < total; i++) {
+                var ip: ItemParticle = new box2dp.ItemParticle();
+                if (beforeCreationCall) beforeCreationCall(ip);
+                userInfo[i] = ip;
+                ip.init(system, group, i);
+                this.domain.particles[system.name].push(ip);
+                this.domain.fireEvent(new Event(Event.PARTICLE_CREATED, this, { itemParticle: ip }));
+                for (var k: number = 0; k < this.domain.rlen; k++) this.domain.renderers[k].onParticleCreate(ip);
+            }
+            this.domain.particleGroups.push(group);
+            return group;
+
+        }
+
     }
+
 }
 

@@ -162,8 +162,6 @@
 
         public rootNode: QuadNode;
 
-        public drawDebug: boolean = false;
-
         constructor(x: number, y: number, w: number, h: number, maxChildren: number = 3, maxDepth: number = 4) {
             this.rootNode = new QuadNode(x, y, w, h, 0, maxChildren, maxDepth);
         }

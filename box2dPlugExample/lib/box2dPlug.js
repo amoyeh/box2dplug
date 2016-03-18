@@ -2,10 +2,9 @@ var box2dp;
 (function (box2dp) {
     var Color = (function () {
         function Color() {
-            this.BACKGROUND = 0xF4F4F4;
             this.ITEM_STATIC = 0x555555;
-            this.ITEM_DYNAMIC = 0x888888;
-            this.ITEM_ALPHA = 1;
+            this.ITEM_DYNAMIC = 0x999999;
+            this.ITEM_ALPHA = 0.6;
             this.LINE_CENTER_X = 0xffb9b2;
             this.LINE_CENTER_Y = 0xc3ffb2;
             this.LINE_BOUNDARY = 0xBBBBBB;
@@ -37,14 +36,14 @@ var box2dp;
             this.WANDER = 0x969696;
             this.WANDER_ALPHA = 0.3;
             this.QUADTREE = 0x55CCCC;
-            this.QUADTREE_A = 0.2;
+            this.QUADTREE_A = 0.8;
+            this.LINE_JOINT = 0xCC3300;
         }
         Color.DarkTheme = function () {
             var color = new Color();
-            color.BACKGROUND = 0x181818;
             color.ITEM_STATIC = 0x494949;
             color.ITEM_DYNAMIC = 0x808080;
-            color.ITEM_ALPHA = 1;
+            color.ITEM_ALPHA = 0.5;
             color.LINE_CENTER_X = 0xFFAD99;
             color.LINE_CENTER_Y = 0xADFF99;
             color.LINE_BOUNDARY = 0x6F586F;
@@ -86,60 +85,37 @@ var box2dp;
             return this.ITEM_DYNAMIC;
         };
         Color.prototype.getItemStaticMat = function () {
-            if (!this.itemStaticMat) {
-                this.itemStaticMat = new THREE.MeshBasicMaterial({ color: this.ITEM_STATIC, side: THREE.DoubleSide, opacity: this.ITEM_ALPHA, transparent: true });
-            }
-            return this.itemStaticMat;
+            return new THREE.MeshBasicMaterial({ color: this.ITEM_STATIC, side: THREE.DoubleSide, opacity: this.ITEM_ALPHA, transparent: true });
         };
         Color.prototype.getItemDynamicMat = function () {
-            if (!this.itemDynamicMat) {
-                this.itemDynamicMat = new THREE.MeshBasicMaterial({ color: this.ITEM_DYNAMIC, side: THREE.DoubleSide, opacity: this.ITEM_ALPHA, transparent: true });
-            }
-            return this.itemDynamicMat;
+            return new THREE.MeshBasicMaterial({ color: this.ITEM_DYNAMIC, side: THREE.DoubleSide, opacity: this.ITEM_ALPHA, transparent: true });
         };
         Color.prototype.getLineMatStatic = function () {
-            if (!this.lineStaticMat) {
-                this.lineStaticMat = new THREE.LineBasicMaterial({ color: this.ITEM_STATIC, side: THREE.DoubleSide, opacity: this.ITEM_ALPHA, transparent: true, linewidth: 1 });
-            }
-            return this.lineStaticMat;
+            return new THREE.LineBasicMaterial({ color: this.ITEM_STATIC, side: THREE.DoubleSide, opacity: this.ITEM_ALPHA, transparent: true, linewidth: 1 });
         };
         Color.prototype.getLineMatDynamic = function () {
-            if (!this.lineDynamicMat) {
-                this.lineDynamicMat = new THREE.LineBasicMaterial({ color: this.ITEM_DYNAMIC, side: THREE.DoubleSide, opacity: this.ITEM_ALPHA, transparent: true, linewidth: 1 });
-            }
-            return this.lineDynamicMat;
+            return new THREE.LineBasicMaterial({ color: this.ITEM_DYNAMIC, side: THREE.DoubleSide, opacity: this.ITEM_ALPHA, transparent: true, linewidth: 1 });
         };
         Color.prototype.getSensorMat = function () {
-            if (!this.sensorMat) {
-                this.sensorMat = new THREE.MeshBasicMaterial({ color: this.SENSOR, side: THREE.DoubleSide, opacity: this.SENSOR_ALPHA, transparent: true });
-            }
-            return this.sensorMat;
+            return new THREE.MeshBasicMaterial({ color: this.SENSOR, side: THREE.DoubleSide, opacity: this.SENSOR_ALPHA, transparent: true });
         };
         Color.prototype.getLineCenterXMat = function () {
-            if (!this.lineCenterX) {
-                this.lineCenterX = new THREE.LineBasicMaterial({ color: this.LINE_CENTER_X });
-            }
-            return this.lineCenterX;
+            return new THREE.LineBasicMaterial({ color: this.LINE_CENTER_X });
         };
         Color.prototype.getLineCenterYMat = function () {
-            if (!this.lineCenterY) {
-                this.lineCenterY = new THREE.LineBasicMaterial({ color: this.LINE_CENTER_Y });
-            }
-            return this.lineCenterY;
+            return new THREE.LineBasicMaterial({ color: this.LINE_CENTER_Y });
+            ;
         };
         Color.prototype.getLineBoundary = function () {
-            if (!this.lineBoundary) {
-                this.lineBoundary = new THREE.LineDashedMaterial({
-                    color: this.LINE_BOUNDARY, linewidth: 2, dashSize: 10, gapSize: 5
-                });
-            }
-            return this.lineBoundary;
+            return new THREE.LineDashedMaterial({ color: this.LINE_BOUNDARY, dashSize: 10, gapSize: 5 });
+            ;
+        };
+        Color.prototype.getLineJoint = function () {
+            return new THREE.LineBasicMaterial({ color: this.LINE_JOINT, side: THREE.DoubleSide, transparent: true });
+            ;
         };
         Color.prototype.getLineQuadTree = function () {
-            if (!this.lineQuadTree) {
-                this.lineQuadTree = new THREE.LineBasicMaterial({ color: this.QUADTREE, side: THREE.DoubleSide, opacity: this.QUADTREE_A, transparent: true });
-            }
-            return this.lineQuadTree;
+            return new THREE.LineBasicMaterial({ color: this.QUADTREE, side: THREE.DoubleSide, opacity: this.QUADTREE_A, transparent: true });
         };
         return Color;
     })();
@@ -165,6 +141,12 @@ var box2dp;
         Event.AFTER_RENDER = "after_render";
         Event.BEGIN_CONTACT = "begin_contact";
         Event.END_CONTACT = "end_contact";
+        Event.PRESOLVE = "presolve";
+        Event.POSTSOLVE = "postsolve";
+        Event.PARTICLE_REMOVED = "particleRemoved";
+        Event.PARTICLE_CREATED = "particleCreated";
+        Event.PARTICLE_FIXTURE_CONTACT = "pfContact";
+        Event.PARTICLE_PARTICLE_CONTACT = "ppContact";
         return Event;
     })();
     box2dp.Event = Event;
@@ -211,17 +193,24 @@ var box2dp;
     var Domain = (function (_super) {
         __extends(Domain, _super);
         function Domain(gravity, physicFixStepTime, updateMode) {
+            if (physicFixStepTime === void 0) { physicFixStepTime = 0.1; }
             if (updateMode === void 0) { updateMode = Domain.UPDATE_FIXED; }
             _super.call(this);
+            this.particleSystemUniqueCount = 0;
             this.world = new box2d.b2World(new box2d.b2Vec2(gravity.x, gravity.y));
-            this.maker = new box2dp.BoxMaker(this.world);
+            this.maker = new box2dp.BoxMaker(this.world, this);
             this.physicFixStepTime = physicFixStepTime;
             this.renderers = [];
             this.items = [];
+            this.particleSystems = [];
+            this.particles = {};
+            this.particleGroups = [];
             this.updateMode = updateMode;
             this.groundBody = this.world.CreateBody(new box2d.b2BodyDef());
             this.contactManager = new ContactManager(this);
             this.world.SetContactListener(this.contactManager);
+            this.destructionListener = new DestructionListener(this);
+            this.world.SetDestructionListener(this.destructionListener);
         }
         Domain.addCounter = function (type) {
             if (Domain.uniqueNameCounters[type] == null)
@@ -233,7 +222,7 @@ var box2dp;
             this.debugDrawCanvas = document.getElementById(canvasId);
             this.debugDrawCtx = this.debugDrawCanvas.getContext("2d");
             this.debugDraw = new box2d.DebugDraw(this.debugDrawCanvas);
-            this.debugDraw.SetFlags(box2d.b2DrawFlags.e_all);
+            this.debugDraw.SetFlags(box2d.b2DrawFlags.e_shapeBit | box2d.b2DrawFlags.e_particleBit | box2d.b2DrawFlags.e_jointBit);
             this.world.SetDebugDraw(this.debugDraw);
             this.debugDrawCanvas.width = width;
             this.debugDrawCanvas.height = height;
@@ -242,6 +231,13 @@ var box2dp;
             this.renderers.push(renderer);
             renderer.domain = this;
             this.rlen = this.renderers.length;
+        };
+        Domain.prototype.eachRenderer = function (callback) {
+            var rlen = this.renderers.length;
+            for (var k = rlen - 1; k > -1; k--) {
+                if (callback)
+                    callback(this.renderers[k], k);
+            }
         };
         Domain.prototype.getUniqueName = function (name) {
             var exist = false;
@@ -284,11 +280,52 @@ var box2dp;
                 name = this.getUniqueName(name);
             }
             var newItem = new box2dp.ItemEntity(this.maker.create(makeInfo), makeInfo.itemType, name);
+            if (makeInfo.isSensor)
+                newItem.isSensor = true;
             this.items.push(newItem);
             for (var k = 0; k < this.rlen; k++)
                 this.renderers[k].onItemCreate(newItem);
             this.fireEvent(new box2dp.Event(box2dp.Event.ITEM_CREATED, this, newItem));
             return newItem;
+        };
+        Domain.prototype.createChain = function (makeInfo) {
+            var name = makeInfo.name;
+            if (makeInfo.name == null) {
+                name = "ItemEntity-" + Domain.addCounter("ItemEntity");
+            }
+            else {
+                name = this.getUniqueName(name);
+            }
+            return this.maker.createChain(name, makeInfo);
+        };
+        Domain.prototype.createParticleSystem = function (info, shapeType, color, alpha) {
+            var newSystem = this.world.CreateParticleSystem(info);
+            var uniqueName = "ps." + this.particleSystemUniqueCount;
+            this.particles[uniqueName] = [];
+            this.particleSystems.push(newSystem);
+            newSystem.name = uniqueName;
+            for (var k = 0; k < this.rlen; k++)
+                this.renderers[k].onParticleSystemCreate(newSystem, shapeType, color, alpha);
+            this.particleSystemUniqueCount++;
+            return newSystem;
+        };
+        Domain.prototype.createParticle = function (system, def, colorDef) {
+            return this.maker.createParticle(system, def, colorDef);
+        };
+        Domain.prototype.destroyParticle = function (system, index) {
+            system.DestroyParticle(index, null);
+        };
+        Domain.prototype.createParticleGroup = function (system, def, beforeCreationCall) {
+            return this.maker.createParticleGroup(system, def, beforeCreationCall);
+        };
+        Domain.prototype.destroyParticleGroup = function (system, group) {
+            system.DestroyParticleGroup(group);
+        };
+        Domain.prototype.fillParticles = function (system, def, w, h) {
+            return this.maker.fillParticles(system, def, w, h);
+        };
+        Domain.prototype.createJoint = function (jointDef) {
+            return this.world.CreateJoint(jointDef);
         };
         Domain.prototype.step = function () {
             var ilen = this.items.length;
@@ -306,15 +343,22 @@ var box2dp;
                 this.items[p].integratePos(1);
                 this.items[p].setOldPos();
             }
+            for (var t = 0; t < this.particleSystems.length; t++) {
+                var lsys = this.particleSystems[t];
+                var pos = lsys.GetPositionBuffer();
+                var userDatas = lsys.GetUserDataBuffer();
+                var useArray = this.particles[lsys.name];
+                for (var u = 0; u < useArray.length; u++) {
+                    userDatas[u].integratePos(1);
+                    userDatas[u].currentIndex = u;
+                    userDatas[u].setOldPos(pos[u].x, pos[u].y);
+                }
+            }
             this.fireEvent(new box2dp.Event(box2dp.Event.BEFORE_STEP, this));
             if (this.updateMode == Domain.UPDATE_FIXED) {
-                this.world.Step(this.physicFixStepTime, 10, 5, 1);
+                this.world.Step(this.physicFixStepTime, 8, 3, 3);
             }
             else {
-                if (this.lastStepTime) {
-                    var timeDiff = Math.round((new Date().getTime() - this.lastStepTime) / 10) / 100;
-                    this.world.Step(timeDiff, 10, 5, 1);
-                }
             }
             if (this.debugDrawCtx) {
                 this.debugDrawCtx.clearRect(0, 0, this.debugDrawCanvas.width, this.debugDrawCanvas.height);
@@ -323,6 +367,17 @@ var box2dp;
             for (var p = 0; p < ilen; p++) {
                 this.items[p].setCurrentPos();
                 this.items[p].updateBoundary();
+            }
+            for (var t = 0; t < this.particleSystems.length; t++) {
+                var lsys = this.particleSystems[t];
+                var pos = lsys.GetPositionBuffer();
+                var userDatas = lsys.GetUserDataBuffer();
+                var useArray = this.particles[lsys.name];
+                for (var u = 0; u < useArray.length; u++) {
+                    if (userDatas[u]) {
+                        userDatas[u].setCurrentPos(pos[u].x, pos[u].y);
+                    }
+                }
             }
             this.fireEvent(new box2dp.Event(box2dp.Event.AFTER_STEP, this));
             this.lastStepTime = new Date().getTime();
@@ -340,8 +395,15 @@ var box2dp;
             }
             if (percent != 0 && percent != 1) {
                 var ilen = this.items.length;
-                for (var p = 0; p < ilen; p++)
+                for (var p = 0; p < ilen; p++) {
                     this.items[p].integratePos(percent);
+                }
+                for (var t = 0; t < this.particleSystems.length; t++) {
+                    var useArray = this.particles[this.particleSystems[t].name];
+                    for (var u = 0; u < useArray.length; u++) {
+                        useArray[u].integratePos(percent);
+                    }
+                }
             }
             this.fireEvent(new box2dp.Event(box2dp.Event.BEFORE_RENDER, this, timePassed));
             for (var k = 0; k < this.rlen; k++)
@@ -354,6 +416,12 @@ var box2dp;
             this.renderTime = renderTime;
             this.stepInterval = setInterval(function () { _this.step(); }, this.stepTime);
             this.renderInterval = setInterval(function () { _this.render(); }, this.renderTime);
+        };
+        Domain.prototype.runAStep = function (stepTime, renderTime) {
+            this.stepTime = stepTime;
+            this.renderTime = renderTime;
+            this.step();
+            this.render();
         };
         Domain.prototype.stop = function () {
             clearInterval(this.stepInterval);
@@ -396,6 +464,7 @@ var box2dp;
                     break;
                 }
             }
+            item.removeJoints();
             item.removePhysic();
             item = null;
         };
@@ -411,17 +480,33 @@ var box2dp;
             box2d.b2ContactListener.call(this);
         }
         ContactManager.prototype.PreSolve = function (contact, oldManifold) {
+            var iA = contact.GetFixtureA().GetBody().item;
+            var iB = contact.GetFixtureB().GetBody().item;
+            if (iA && iB) {
+                if (iA.enableSolveEvent)
+                    iA.fireEvent(new box2dp.Event(box2dp.Event.PRESOLVE, iA, { otherItem: iB, contact: contact, oldManifold: oldManifold }));
+                if (iB.enableSolveEvent)
+                    iB.fireEvent(new box2dp.Event(box2dp.Event.PRESOLVE, iB, { otherItem: iA, contact: contact, oldManifold: oldManifold }));
+            }
         };
         ContactManager.prototype.PostSolve = function (contact, impulse) {
+            var iA = contact.GetFixtureA().GetBody().item;
+            var iB = contact.GetFixtureB().GetBody().item;
+            if (iA && iB) {
+                if (iA.enableSolveEvent)
+                    iA.fireEvent(new box2dp.Event(box2dp.Event.POSTSOLVE, iA, { otherItem: iB, contact: contact, impulse: impulse }));
+                if (iB.enableSolveEvent)
+                    iB.fireEvent(new box2dp.Event(box2dp.Event.POSTSOLVE, iB, { otherItem: iA, contact: contact, impulse: impulse }));
+            }
         };
         ContactManager.prototype.BeginContact = function (contact) {
             var iA = contact.GetFixtureA().GetBody().item;
             var iB = contact.GetFixtureB().GetBody().item;
             if (iA && iB) {
                 if (iA.enableContactEvent)
-                    iA.fireEvent(new box2dp.Event(box2dp.Event.BEGIN_CONTACT, iA, { otherItem: iB }));
+                    iA.fireEvent(new box2dp.Event(box2dp.Event.BEGIN_CONTACT, iA, { contact: contact, otherItem: iB }));
                 if (iB.enableContactEvent)
-                    iB.fireEvent(new box2dp.Event(box2dp.Event.BEGIN_CONTACT, iB, { otherItem: iA }));
+                    iB.fireEvent(new box2dp.Event(box2dp.Event.BEGIN_CONTACT, iB, { contact: contact, otherItem: iA }));
             }
         };
         ContactManager.prototype.EndContact = function (contact) {
@@ -429,32 +514,72 @@ var box2dp;
             var iB = contact.GetFixtureB().GetBody().item;
             if (iA && iB) {
                 if (iA.enableContactEvent)
-                    iA.fireEvent(new box2dp.Event(box2dp.Event.END_CONTACT, iA, { otherItem: iB }));
+                    iA.fireEvent(new box2dp.Event(box2dp.Event.END_CONTACT, iA, { contact: contact, otherItem: iB }));
                 if (iB.enableContactEvent)
-                    iB.fireEvent(new box2dp.Event(box2dp.Event.END_CONTACT, iB, { otherItem: iA }));
+                    iB.fireEvent(new box2dp.Event(box2dp.Event.END_CONTACT, iB, { contact: contact, otherItem: iA }));
             }
         };
         ContactManager.prototype.BeginContactFixtureParticle = function (particleSystem, particleBodyContact) {
-        };
-        ContactManager.prototype.EndContactFixtureParticle = function (fixture, particleSystem, particleIndex) {
+            this.domain.fireEvent(new box2dp.Event(box2dp.Event.PARTICLE_FIXTURE_CONTACT, this.domain, { system: particleSystem, contact: particleBodyContact }));
         };
         ContactManager.prototype.BeginContactParticleParticle = function (particleSystem, particleContact) {
-        };
-        ContactManager.prototype.EndContactParticleParticle = function (particleSystem, particleIndexA, particleIndexB) {
+            this.domain.fireEvent(new box2dp.Event(box2dp.Event.PARTICLE_PARTICLE_CONTACT, this.domain, { system: particleSystem, contact: particleContact }));
         };
         return ContactManager;
     })();
 })(box2dp || (box2dp = {}));
-var DestructionListener = function () {
+var DestructionListener = function (domain) {
+    this.domain = domain;
     this.itemList = [];
     this.particleData = [];
 };
 window["goog"].inherits(DestructionListener, box2d.b2DestructionListener);
-DestructionListener.prototype.SayGoodbyeJoint = function (joint) { };
-DestructionListener.prototype.SayGoodbyeFixture = function (fixture) { };
-DestructionListener.prototype.SayGoodbyeParticleGroup = function (group) { };
-DestructionListener.prototype.SayGoodbyeJoint = function (joint) { };
-DestructionListener.prototype.SayGoodbyeParticle = function (particleSystem, particleIndex) { };
+DestructionListener.prototype.SayGoodbyeJoint = function (joint) {
+};
+DestructionListener.prototype.SayGoodbyeFixture = function (fixture) {
+};
+DestructionListener.prototype.SayGoodbyeParticleGroup = function (group) {
+    var system = group.m_system;
+    for (var s = 0; s < this.domain.particleGroups.length; s++) {
+        if (this.domain.particleGroups[s] === group) {
+            this.domain.particleGroups.splice(s, 1);
+            break;
+        }
+    }
+    var i = group.GetBufferIndex();
+    var total = i + group.GetParticleCount();
+    var userInfo = system.GetUserDataBuffer();
+    for (; i < total; i++)
+        system.DestroyParticle(i);
+};
+DestructionListener.prototype.SayGoodbyeJoint = function (joint) {
+};
+DestructionListener.prototype.SayGoodbyeParticle = function (particleSystem, particleIndex) {
+    var posData = particleSystem.GetPositionBuffer();
+    var userData = particleSystem.GetUserDataBuffer();
+    var removeOne = userData[particleIndex];
+    var useArray = this.domain.particles[particleSystem.name];
+    var plen = useArray.length;
+    for (var i = 0; i < plen; i++) {
+        if (useArray[i] === removeOne) {
+            useArray.splice(i, 1);
+            break;
+        }
+    }
+    if (removeOne) {
+        this.domain.eachRenderer(function (renderer, index) {
+            if (removeOne) {
+                if (removeOne.display) {
+                    renderer.onParticleDestroy(removeOne);
+                }
+            }
+        });
+        this.domain.fireEvent(new box2dp.Event(box2dp.Event.PARTICLE_REMOVED, this.domain, { itemParticle: removeOne }));
+        userData[particleIndex] = null;
+        removeOne.display = null;
+        removeOne = null;
+    }
+};
 var QueryCallBack = function () {
     this.itemList = [];
     this.particleData = [];
@@ -486,7 +611,6 @@ var box2dp;
         }
         ItemBase.prototype.remove = function () { };
         ItemBase.SHAPE = 1;
-        ItemBase.SENSOR = 2;
         ItemBase.UNIT = 3;
         ItemBase.PATH = 4;
         return ItemBase;
@@ -500,14 +624,15 @@ var box2dp;
         function ItemEntity(b2body, type, name) {
             _super.call(this, name);
             this.enableContactEvent = false;
+            this.enableSolveEvent = false;
             this.type = type;
             this.b2body = b2body;
             this.b2body.item = this;
+            this.dynamic = (this.b2body.GetType() === box2d.b2BodyType.b2_dynamicBody);
             this.setOldPos();
             this.setCurrentPos();
             this.updateBoundary();
             this.display = {};
-            this.enableContactEvent = (this.type == box2dp.ItemBase.SENSOR);
         }
         ItemEntity.prototype.setOldPos = function () {
             this.oldx = box2dp.MakeInfo.mult30(this.b2body.GetPosition().x);
@@ -602,9 +727,53 @@ var box2dp;
             this.b2body = undefined;
             this.display = undefined;
         };
+        ItemEntity.prototype.removeJoints = function () {
+            var je = this.b2body.GetJointList();
+            if (je != null) {
+                var outList = [];
+                for (var jt = je.joint; jt; jt = jt.GetNext()) {
+                    outList.push(jt);
+                }
+                for (var t = 0; t < outList.length; t++)
+                    this.b2body.GetWorld().DestroyJoint(outList[t]);
+            }
+        };
         return ItemEntity;
     })(box2dp.ItemBase);
     box2dp.ItemEntity = ItemEntity;
+})(box2dp || (box2dp = {}));
+var box2dp;
+(function (box2dp) {
+    var ItemParticle = (function () {
+        function ItemParticle() {
+            this.name = "p." + ItemParticle.UNIQUE_COUNT;
+            this.uniqueAlpha = this.uniqueColor = null;
+            ItemParticle.UNIQUE_COUNT++;
+        }
+        ItemParticle.prototype.init = function (system, group, startIndex) {
+            this.system = system;
+            this.group = group;
+            var atPos = this.system.GetPositionBuffer()[startIndex];
+            this.setOldPos(atPos.x, atPos.y);
+            this.setCurrentPos(atPos.x, atPos.y);
+            this.display = {};
+        };
+        ItemParticle.prototype.setOldPos = function (x, y) {
+            this.oldx = box2dp.MakeInfo.mult30(x);
+            this.oldy = box2dp.MakeInfo.mult30(y);
+        };
+        ItemParticle.prototype.setCurrentPos = function (x, y) {
+            this.cx = box2dp.MakeInfo.mult30(x);
+            this.cy = box2dp.MakeInfo.mult30(y);
+        };
+        ItemParticle.prototype.integratePos = function (percent) {
+            this.ix = Math.round(this.oldx + ((this.cx - this.oldx) * percent));
+            this.iy = Math.round(this.oldy + ((this.cy - this.oldy) * percent));
+        };
+        ItemParticle.UNIQUE_COUNT = 0;
+        return ItemParticle;
+    })();
+    box2dp.ItemParticle = ItemParticle;
 })(box2dp || (box2dp = {}));
 var box2dp;
 (function (box2dp) {
@@ -742,7 +911,6 @@ var box2dp;
         function QuadTree(x, y, w, h, maxChildren, maxDepth) {
             if (maxChildren === void 0) { maxChildren = 3; }
             if (maxDepth === void 0) { maxDepth = 4; }
-            this.drawDebug = false;
             this.rootNode = new QuadNode(x, y, w, h, 0, maxChildren, maxDepth);
         }
         QuadTree.prototype.insert = function (item) {
@@ -781,9 +949,12 @@ var box2dp;
 (function (box2dp) {
     var DragControl = (function () {
         function DragControl(renderer) {
+            var _this = this;
+            this.dragging = false;
             this.domain = renderer.domain;
             this.world = this.domain.world;
             this.renderer = renderer;
+            this.domain.addEvent(box2dp.Event.BEFORE_STEP, this["beforeStep"] = function (e) { _this.beforeStepUpdate(); });
         }
         DragControl.prototype.createDragDrop = function () {
             if (this.renderer.constructor === box2dp.PixiRenderer) {
@@ -806,6 +977,9 @@ var box2dp;
             var _this = this;
             var lx = box2dp.MakeInfo.round((e.pageX - this.renderer.useElement.offsetLeft) / 30);
             var ly = box2dp.MakeInfo.round((e.pageY - this.renderer.useElement.offsetTop) / 30);
+            this.mousePt = new box2d.b2Vec2(lx, ly);
+            this.tweenPt = new box2d.b2Vec2(lx, ly);
+            this.dragging = true;
             var items = this.domain.itemUnderPoint(lx, ly);
             if (items.length > 0) {
                 var clickBody = items[0].GetBody();
@@ -826,12 +1000,14 @@ var box2dp;
             if (this.mouseJoint) {
                 this.mouseJoint.SetTarget(new box2d.b2Vec2(lx, ly));
             }
+            this.mousePt = new box2d.b2Vec2(lx, ly);
         };
         DragControl.prototype.ddUp = function (e) {
             if (this.mouseJoint) {
                 this.domain.world.DestroyJoint(this.mouseJoint);
                 this.mouseJoint = null;
             }
+            this.dragging = false;
             document.removeEventListener("mousemove", this["mouseMoveObj"]);
             document.removeEventListener("mouseup", this["mouseUpObj"]);
         };
@@ -842,6 +1018,9 @@ var box2dp;
             var mousePt = this.renderer.getXYFromCamera(mx, my);
             var lx = box2dp.MakeInfo.round(mousePt.x / 30);
             var ly = box2dp.MakeInfo.round(mousePt.y / 30);
+            this.mousePt = new box2d.b2Vec2(lx, ly);
+            this.tweenPt = new box2d.b2Vec2(lx, ly);
+            this.dragging = true;
             var items = this.domain.itemUnderPoint(lx, ly);
             if (items.length > 0) {
                 var clickBody = items[0].GetBody();
@@ -852,7 +1031,6 @@ var box2dp;
                 mjDef.maxForce = 1000 * clickBody.GetMass();
                 this.mouseJoint = this.domain.world.CreateJoint(mjDef);
                 clickBody.SetAwake(true);
-                console.log(clickBody);
             }
             document.addEventListener("mousemove", this["mouseMoveObj"] = function (e) { _this.tjMove(e); });
             document.addEventListener("mouseup", this["mouseUpObj"] = function (e) { _this.tjUp(e); });
@@ -867,6 +1045,7 @@ var box2dp;
             var mousePt = this.renderer.getXYFromCamera(mx, my);
             var lx = box2dp.MakeInfo.round(mousePt.x / 30);
             var ly = box2dp.MakeInfo.round(mousePt.y / 30);
+            this.mousePt = new box2d.b2Vec2(lx, ly);
             if (this.mouseJoint) {
                 this.mouseJoint.SetTarget(new box2d.b2Vec2(lx, ly));
             }
@@ -878,6 +1057,7 @@ var box2dp;
             }
             document.removeEventListener("mousemove", this["mouseMoveObj"]);
             document.removeEventListener("mouseup", this["mouseUpObj"]);
+            this.dragging = false;
         };
         DragControl.prototype.trackCtrlUpdate = function (e, caller) {
             caller.trackCtrl.update(e.values * 50);
@@ -919,10 +1099,33 @@ var box2dp;
         DragControl.prototype.removeOrbitCtrl = function () {
             this.domain.removeEvent(box2dp.Event.AFTER_RENDER, this.orbitCtrlUpdate);
             if (this.orbCtrl) {
-                console.log(this.orbCtrl);
                 this.orbCtrl.enabled = false;
                 this.orbCtrl = undefined;
-                console.log(this.orbCtrl);
+            }
+        };
+        DragControl.prototype.beforeStepUpdate = function () {
+            if (this.renderer.domain.particleSystems.length > 0 && this.dragging) {
+                var xDiff = (this.mousePt.x - this.tweenPt.x) * .5;
+                var yDiff = (this.mousePt.y - this.tweenPt.y) * .5;
+                this.tweenPt.x += xDiff;
+                this.tweenPt.y += yDiff;
+                var dragForce = new box2d.b2Vec2(xDiff, yDiff);
+                dragForce.SelfMul(50);
+                var qcb = new QueryCallBack();
+                var aabb = new box2d.b2AABB();
+                aabb.lowerBound.Set(this.tweenPt.x - 1, this.tweenPt.y - 1);
+                aabb.upperBound.Set(this.tweenPt.x + 1, this.tweenPt.y + 1);
+                this.domain.world.QueryAABB(qcb, aabb);
+                var plen = qcb.particleData.length;
+                if (plen > 0) {
+                    for (var k = 0; k < plen; k++) {
+                        var atIndex = qcb.particleData[k].index;
+                        var system = qcb.particleData[k].system;
+                        var pt = system.GetPositionBuffer()[atIndex];
+                        var v = system.GetVelocityBuffer()[atIndex];
+                        v.Copy(dragForce);
+                    }
+                }
             }
         };
         return DragControl;
@@ -932,8 +1135,9 @@ var box2dp;
 var box2dp;
 (function (box2dp) {
     var BoxMaker = (function () {
-        function BoxMaker(world) {
+        function BoxMaker(world, domain) {
             this.world = world;
+            this.domain = domain;
         }
         BoxMaker.prototype.create = function (info) {
             if (info.createType == null) {
@@ -1121,73 +1325,144 @@ var box2dp;
             var body = this.world.CreateBody(bodyDef);
             return body;
         };
-        BoxMaker.prototype.createChain = function (info) {
-            var angle = info.degree * 0.0174533;
-            if (!info.overLapGap)
-                info.overLapGap = 5;
-            if (!info.pinHead)
-                info.pinHead = false;
-            if (!info.pinTail)
-                info.pinTail = false;
-            if (!info.collideConnected)
-                info.collideConnected = false;
-            if (!info.density)
-                info.density = 1;
+        BoxMaker.prototype.createItemEntity = function (makeInfo, name) {
+            var newItem = new box2dp.ItemEntity(this.create(makeInfo), makeInfo.itemType, name);
+            this.domain.items.push(newItem);
+            for (var p = 0; p < this.domain.rlen; p++)
+                this.domain.renderers[p].onItemCreate(newItem);
+            this.domain.fireEvent(new box2dp.Event(box2dp.Event.ITEM_CREATED, this.domain, newItem));
+            return newItem;
+        };
+        BoxMaker.prototype.createChain = function (baseName, info) {
+            if (!info.angle)
+                info.angle = 0;
+            if (!info.chainOverlap)
+                info.chainOverlap = 5;
+            if (info.chainPinHead == null)
+                info.chainPinHead = false;
+            if (info.chainPinTail == null)
+                info.chainPinTail = false;
+            if (info.chainCollideConnected == null)
+                info.chainCollideConnected = false;
             var ropeRevoluteD = new box2d.b2RevoluteJointDef();
-            ropeRevoluteD.collideConnected = info.collideConnected;
+            ropeRevoluteD.collideConnected = info.chainCollideConnected;
             var previous;
-            var boxInfo = new box2dp.MakeInfo({ w: info.h, h: info.w, angle: angle, createType: box2dp.MakeInfo.MAKE_BOX_CENTER, density: info.density });
-            var result = {};
+            var boxInfo = new box2dp.MakeInfo({ w: info.h, h: info.w, angle: info.angle, createType: box2dp.MakeInfo.MAKE_BOX_CENTER, density: info.density });
+            var result = { segments: [], pins: [] };
             var firstBody;
             var lastBody;
-            result.bodies = [];
-            result.revoulteJoints = [];
-            for (var k = 0; k < info.amt; k++) {
-                var angleAddX = (Math.cos(angle) * (info.h - info.overLapGap));
-                var angleAddY = (Math.sin(angle) * (info.h - info.overLapGap));
+            for (var k = 0; k < info.chainAmt; k++) {
+                var angleAddX = (Math.cos(info.angle) * (info.h - info.chainOverlap));
+                var angleAddY = (Math.sin(info.angle) * (info.h - info.chainOverlap));
                 boxInfo.x = info.x + angleAddX * k;
                 boxInfo.y = info.y + angleAddY * k;
-                var madeBody = this.create(boxInfo);
-                result.bodies.push(madeBody);
+                var newItem = this.createItemEntity(boxInfo, baseName + ".c." + k);
+                result.segments.push(newItem);
                 if (k == 0)
-                    firstBody = madeBody;
-                if (k == info.amt - 1)
-                    lastBody = madeBody;
+                    firstBody = newItem.b2body;
+                if (k == info.chainAmt - 1)
+                    lastBody = newItem.b2body;
                 if (previous) {
-                    var anchor = madeBody.GetPosition().Clone();
-                    anchor.x -= (Math.cos(angle) * info.h) / 60;
-                    anchor.y -= (Math.sin(angle) * info.h) / 60;
-                    ropeRevoluteD.Initialize(previous, madeBody, anchor);
+                    var anchor = newItem.b2body.GetPosition().Clone();
+                    anchor.x -= (Math.cos(info.angle) * info.h) / 60;
+                    anchor.y -= (Math.sin(info.angle) * info.h) / 60;
+                    ropeRevoluteD.Initialize(previous, newItem.b2body, anchor);
                     this.world.CreateJoint(ropeRevoluteD);
-                    result.revoulteJoints.push(this.world.CreateJoint(ropeRevoluteD));
                 }
-                previous = madeBody;
+                previous = newItem.b2body;
             }
             var ropeJointD = new box2d.b2RopeJointDef();
             ropeJointD.bodyA = firstBody;
             ropeJointD.localAnchorA = new box2d.b2Vec2(0, 0);
             ropeJointD.localAnchorB = new box2d.b2Vec2(0, 0);
-            ropeJointD.maxLength = box2dp.MakeInfo.round((info.h - info.overLapGap) * info.amt / 30);
+            ropeJointD.maxLength = box2dp.MakeInfo.round((info.h - info.chainOverlap) * info.chainAmt / 30);
             ropeJointD.bodyB = lastBody;
-            result.ropeJoint = this.world.CreateJoint(ropeJointD);
-            if (info.pinHead) {
+            this.world.CreateJoint(ropeJointD);
+            if (info.chainPinHead) {
                 var cirInfo = new box2dp.MakeInfo({ x: info.x, y: info.y, radius: 4, createType: box2dp.MakeInfo.MAKE_CIRCLE, isStatic: true });
-                var headCircle = this.create(cirInfo);
-                ropeRevoluteD.Initialize(headCircle, firstBody, headCircle.GetPosition().Clone());
-                result.headPin = headCircle;
-                result.headJoint = this.world.CreateJoint(ropeRevoluteD);
+                var headCircle = this.createItemEntity(cirInfo, baseName + ".head");
+                ropeRevoluteD.Initialize(headCircle.b2body, firstBody, headCircle.b2body.GetPosition().Clone());
+                this.world.CreateJoint(ropeRevoluteD);
             }
-            if (info.pinTail) {
+            if (info.chainPinTail) {
                 var lx = lastBody.GetPosition().x * 30;
                 var ly = lastBody.GetPosition().y * 30;
                 var cirInfo = new box2dp.MakeInfo({ x: lx, y: ly, radius: 4, createType: box2dp.MakeInfo.MAKE_CIRCLE, isStatic: true });
-                var tailCircle = this.create(cirInfo);
-                ropeRevoluteD.Initialize(tailCircle, lastBody, tailCircle.GetPosition().Clone());
+                var tailCircle = this.createItemEntity(cirInfo, baseName + ".tail");
+                ropeRevoluteD.Initialize(tailCircle.b2body, lastBody, tailCircle.b2body.GetPosition().Clone());
                 this.world.CreateJoint(ropeRevoluteD);
-                result.tailPin = tailCircle;
-                result.tailJoint = this.world.CreateJoint(ropeRevoluteD);
             }
             return result;
+        };
+        BoxMaker.prototype.createParticle = function (system, def, colorDef) {
+            var udef = new box2d.b2ParticleDef();
+            udef.flags = def.flags;
+            udef.flags |= box2d.b2ParticleFlag.b2_destructionListenerParticle;
+            udef.lifetime = def.lifetime;
+            udef.position = def.position.Clone();
+            udef.velocity = def.velocity.Clone();
+            var ip = new box2dp.ItemParticle();
+            udef["userData"] = ip;
+            if (colorDef) {
+                ip.uniqueColor = colorDef.color;
+                ip.uniqueAlpha = colorDef.alpha;
+            }
+            var atIndex = system.CreateParticle(udef);
+            ip.init(system, null, atIndex);
+            this.domain.particles[system.name].push(ip);
+            this.domain.fireEvent(new box2dp.Event(box2dp.Event.PARTICLE_CREATED, this, { itemParticle: ip }));
+            for (var k = 0; k < this.domain.rlen; k++)
+                this.domain.renderers[k].onParticleCreate(ip);
+            return ip;
+        };
+        BoxMaker.prototype.fillParticles = function (system, def, w, h) {
+            var result = [];
+            var sx = def.position.x;
+            var sy = def.position.y;
+            var r = system.GetRadius() * 2;
+            for (var lx = 0; lx < w; lx++) {
+                for (var ly = 0; ly < h; ly++) {
+                    var atx = sx + (r * lx);
+                    var aty = sy + (r * ly);
+                    var udef = new box2d.b2ParticleDef();
+                    udef.flags = def.flags;
+                    udef.flags |= box2d.b2ParticleFlag.b2_destructionListenerParticle;
+                    udef.lifetime = def.lifetime;
+                    udef.position = new box2d.b2Vec2(atx, aty);
+                    udef.velocity = def.velocity.Clone();
+                    var ip = new box2dp.ItemParticle();
+                    udef["userData"] = ip;
+                    var atIndex = system.CreateParticle(udef);
+                    ip.init(system, null, atIndex);
+                    this.domain.particles[system.name].push(ip);
+                    this.domain.fireEvent(new box2dp.Event(box2dp.Event.PARTICLE_CREATED, this, { itemParticle: ip }));
+                    for (var k = 0; k < this.domain.rlen; k++)
+                        this.domain.renderers[k].onParticleCreate(ip);
+                    result.push(ip);
+                }
+            }
+            return result;
+        };
+        BoxMaker.prototype.createParticleGroup = function (system, def, beforeCreationCall) {
+            def.flags |= box2d.b2ParticleFlag.b2_destructionListenerParticle;
+            var group = system.CreateParticleGroup(def);
+            var posInfo = system.GetPositionBuffer();
+            var userInfo = system.GetUserDataBuffer();
+            var i = group.GetBufferIndex();
+            var total = i + group.GetParticleCount();
+            for (; i < total; i++) {
+                var ip = new box2dp.ItemParticle();
+                if (beforeCreationCall)
+                    beforeCreationCall(ip);
+                userInfo[i] = ip;
+                ip.init(system, group, i);
+                this.domain.particles[system.name].push(ip);
+                this.domain.fireEvent(new box2dp.Event(box2dp.Event.PARTICLE_CREATED, this, { itemParticle: ip }));
+                for (var k = 0; k < this.domain.rlen; k++)
+                    this.domain.renderers[k].onParticleCreate(ip);
+            }
+            this.domain.particleGroups.push(group);
+            return group;
         };
         return BoxMaker;
     })();
@@ -1292,6 +1567,7 @@ var box2dp;
         MakeInfo.MAKE_CIRCLE = 4;
         MakeInfo.MAKE_EDGE = 5;
         MakeInfo.MAKE_COMPOUND = 6;
+        MakeInfo.MAKE_CHAIN = 7;
         return MakeInfo;
     })();
     box2dp.MakeInfo = MakeInfo;
@@ -1328,6 +1604,15 @@ var box2dp;
         BaseRenderer.prototype.hasDrawType = function (checkType) {
             return ((this.drawFlags & checkType) == checkType);
         };
+        BaseRenderer.prototype.simpleJoinDraw = function (jt) {
+            var types = [box2d.b2RevoluteJoint, box2d.b2WeldJoint, box2d.b2PrismaticJoint, box2d.b2FrictionJoint,
+                box2d.b2AreaJoint, box2d.b2WheelJoint, box2d.b2GearJoint, box2d.b2DistanceJoint, box2d.b2MotorJoint];
+            for (var t = 0; t < types.length; t++) {
+                if (jt instanceof types[t])
+                    return true;
+            }
+            return false;
+        };
         BaseRenderer.prototype.beforeStep = function () { };
         BaseRenderer.prototype.afterStep = function () { };
         BaseRenderer.prototype.render = function () { };
@@ -1335,10 +1620,18 @@ var box2dp;
         ;
         BaseRenderer.prototype.onItemRemove = function (item) { };
         ;
+        BaseRenderer.prototype.onParticleSystemCreate = function (system, shapeType, color, alpha) { };
+        ;
+        BaseRenderer.prototype.onParticleCreate = function (item) { };
+        ;
+        BaseRenderer.prototype.onParticleDestroy = function (removeOne) { };
+        ;
         BaseRenderer.DRAW_SHAPE = 1 << 1;
         BaseRenderer.DRAW_CENTER = 1 << 2;
         BaseRenderer.DRAW_BOUNDARY = 1 << 3;
         BaseRenderer.DRAW_QUAD_TREE = 1 << 4;
+        BaseRenderer.DRAW_JOINT = 1 << 5;
+        BaseRenderer.DRAW_ALL = BaseRenderer.DRAW_SHAPE | BaseRenderer.DRAW_CENTER | BaseRenderer.DRAW_BOUNDARY | BaseRenderer.DRAW_QUAD_TREE | BaseRenderer.DRAW_JOINT;
         return BaseRenderer;
     })();
     box2dp.BaseRenderer = BaseRenderer;
@@ -1349,11 +1642,15 @@ var box2dp;
         __extends(PixiRenderer, _super);
         function PixiRenderer(options) {
             _super.call(this, options);
-            var renderObj = { antialias: options.antialias, transparent: options.transparent };
-            if (options.transparent == false && options.backgroundColor)
-                renderObj.backgroundColor = options.backgroundColor;
+            var renderObj = { antialias: false, transparent: false };
+            if (options.antialias)
+                renderObj.antialias = true;
+            if (options.transparent)
+                renderObj.transparent = true;
             this.renderer = PIXI.autoDetectRenderer(options.width, options.height, renderObj);
-            this.renderer.backgroundColor = this.colorClass.BACKGROUND;
+            if ((!options.transparent) && options.backgroundColor) {
+                this.renderer.backgroundColor = options.backgroundColor;
+            }
             this.useElement.appendChild(this.renderer.view);
             this.scene = new PIXI.Container();
             this.container = new PIXI.Container();
@@ -1362,15 +1659,31 @@ var box2dp;
             this.scene.addChild(this.quadGraphic);
             this.overGraphic = new PIXI.Graphics();
             this.scene.addChild(this.overGraphic);
+            this.jointGraphic = new PIXI.Graphics();
+            this.scene.addChild(this.jointGraphic);
+            this.psGeometries = [];
         }
         PixiRenderer.prototype.beforeStep = function () { };
         PixiRenderer.prototype.afterStep = function () { };
         PixiRenderer.prototype.render = function () {
+            this.jointGraphic.clear();
+            this.jointGraphic.lineStyle(1, this.colorClass.LINE_JOINT, 1);
             var ilen = this.domain.items.length;
             for (var p = 0; p < ilen; p++) {
                 var litem = this.domain.items[p];
                 if (litem.display["pixi"]) {
                     this.itemDisplayUpdate(litem.display["pixi"], litem);
+                }
+            }
+            for (var t = 0; t < this.domain.particleSystems.length; t++) {
+                var lsys = this.domain.particleSystems[t];
+                var useArray = this.domain.particles[lsys.name];
+                for (var u = 0; u < useArray.length; u++) {
+                    if (useArray[u].display["pixi"]) {
+                        var grapic = useArray[u].display["pixi"];
+                        grapic.x = useArray[u].ix;
+                        grapic.y = useArray[u].iy;
+                    }
                 }
             }
             if (this.hasDrawType(box2dp.BaseRenderer.DRAW_QUAD_TREE) && this.domain.quadTree != null) {
@@ -1388,9 +1701,8 @@ var box2dp;
         };
         PixiRenderer.prototype.drawTreeNode = function (targetNode) {
             if (targetNode.nodes.length > 0) {
-                for (var i = 0; i < targetNode.nodes.length; i++) {
+                for (var i = 0; i < targetNode.nodes.length; i++)
                     this.drawTreeNode(targetNode.nodes[i]);
-                }
             }
             var g = this.quadGraphic;
             g.lineStyle(2, this.colorClass.QUADTREE, this.colorClass.QUADTREE_A);
@@ -1416,7 +1728,7 @@ var box2dp;
             if (it.b2body.GetType() == box2d.b2BodyType.b2_dynamicBody) {
                 useColor = this.colorClass.ITEM_DYNAMIC;
             }
-            if (item.type == box2dp.ItemBase.SENSOR) {
+            if (item.isSensor) {
                 useColor = this.colorClass.SENSOR;
                 useAlpha = this.colorClass.SENSOR_ALPHA;
             }
@@ -1484,6 +1796,42 @@ var box2dp;
                 }
             }
         };
+        PixiRenderer.prototype.onParticleSystemCreate = function (system, shapeType, color, alpha) {
+            this.psGeometries[system.name] = { shapeType: shapeType, color: color, alpha: alpha };
+        };
+        PixiRenderer.prototype.onParticleCreate = function (item) {
+            var graphic = new PIXI.Graphics();
+            var useInfo = this.psGeometries[item.system.name];
+            var useColor = useInfo.color;
+            var useAlpha = useInfo.alpha;
+            if (item.uniqueColor != null) {
+                useColor = item.uniqueColor;
+                useAlpha = item.uniqueAlpha;
+            }
+            var radius = box2dp.MakeInfo.mult30(item.system.GetRadius());
+            if (useInfo.shapeType == box2dp.MakeInfo.MAKE_BOX_CENTER) {
+                graphic.beginFill(useColor, useAlpha);
+                graphic.drawRect(-radius, -radius, radius * 2, radius * 2);
+                graphic.endFill();
+            }
+            else {
+                graphic.beginFill(useColor, useAlpha);
+                graphic.drawCircle(0, 0, radius);
+                graphic.endFill();
+            }
+            graphic.x = item.cx;
+            graphic.y = item.cy;
+            this.container.addChild(graphic);
+            item.display["pixi"] = graphic;
+            graphic.name = item.name;
+        };
+        PixiRenderer.prototype.onParticleDestroy = function (removeOne) {
+            if (removeOne.display["pixi"]) {
+                this.container.removeChild(removeOne.display["pixi"]);
+                removeOne.display["pixi"].destroy(true);
+                delete removeOne.display["pixi"];
+            }
+        };
         PixiRenderer.prototype.itemDisplayUpdate = function (display, item) {
             display.x = item.ix;
             display.y = item.iy;
@@ -1499,6 +1847,27 @@ var box2dp;
             this.dashLine(gb, bd.x, bd.y + bd.h, bd.x + bd.w, bd.y + bd.h);
             this.dashLine(gb, bd.x, bd.y, bd.x, bd.y + bd.h);
             this.dashLine(gb, bd.x + bd.w, bd.y, bd.x + bd.w, bd.y + bd.h);
+            if (this.hasDrawType(box2dp.BaseRenderer.DRAW_JOINT)) {
+                var je = item.b2body.GetJointList();
+                if (je != null) {
+                    for (var jt = je.joint; jt; jt = jt.GetNext()) {
+                        if (jt.GetBodyA().item && jt.GetBodyB().item) {
+                            if (this.simpleJoinDraw(jt)) {
+                                this.jointGraphic.moveTo(jt.GetBodyA().item.ix, jt.GetBodyA().item.iy);
+                                this.jointGraphic.lineTo(jt.GetBodyB().item.ix, jt.GetBodyB().item.iy);
+                            }
+                            else if (jt instanceof box2d.b2PulleyJoint) {
+                                this.jointGraphic.moveTo(jt.GetBodyA().item.ix, jt.GetBodyA().item.iy);
+                                this.jointGraphic.lineTo(box2dp.MakeInfo.mult30(jt.m_groundAnchorA.x), box2dp.MakeInfo.mult30(jt.m_groundAnchorA.y));
+                                this.jointGraphic.moveTo(jt.GetBodyB().item.ix, jt.GetBodyB().item.iy);
+                                this.jointGraphic.lineTo(box2dp.MakeInfo.mult30(jt.m_groundAnchorB.x), box2dp.MakeInfo.mult30(jt.m_groundAnchorB.y));
+                                this.jointGraphic.moveTo(box2dp.MakeInfo.mult30(jt.m_groundAnchorA.x), box2dp.MakeInfo.mult30(jt.m_groundAnchorA.y));
+                                this.jointGraphic.lineTo(box2dp.MakeInfo.mult30(jt.m_groundAnchorB.x), box2dp.MakeInfo.mult30(jt.m_groundAnchorB.y));
+                            }
+                        }
+                    }
+                }
+            }
         };
         PixiRenderer.prototype.dashLine = function (g, x, y, x2, y2, dashArray) {
             if (!dashArray)
@@ -1538,30 +1907,51 @@ var box2dp;
         __extends(ThreeRenderer, _super);
         function ThreeRenderer(options) {
             _super.call(this, options);
+            this.jointVerticeCount = 0;
+            this.quadVerticeCount = 0;
             this.camera = new THREE.PerspectiveCamera(45, options.width / options.height, 1, 10000);
             var fov = 45;
             var vFOV = fov * (Math.PI / 180);
             this.camera.position.z = options.height / (2 * Math.tan(vFOV / 2));
             this.camera.lookAt(new THREE.Vector3(0, 0, 0));
-            this.renderer = new THREE.WebGLRenderer({ antialias: options.antialias });
+            this.renderer = new THREE.WebGLRenderer({ antialias: options.antialias, alpha: this.options.transparent });
             this.renderer.setSize(options.width, options.height);
-            this.renderer.setClearColor(this.colorClass.BACKGROUND, 1);
+            if (!this.options.transparent) {
+                if (this.options.backgroundColor)
+                    this.renderer.setClearColor(this.options.backgroundColor, 1);
+            }
             this.useElement.appendChild(this.renderer.domElement);
             this.scene = new THREE.Scene();
             this.container = new THREE.Object3D();
             this.scene.add(this.container);
             this.quadGraphic = new THREE.Object3D();
+            this.jointGraphic = new THREE.Object3D();
             this.overGraphic = new THREE.Object3D();
             this.scene.add(this.quadGraphic);
             this.scene.add(this.overGraphic);
+            this.scene.add(this.jointGraphic);
+            var qGeo = new THREE.Geometry();
+            for (var i = 0; i < ThreeRenderer.QUAD_PT_MAX; i++)
+                qGeo.vertices.push(new THREE.Vector3(0, 0, 0));
+            this.quadLine = new THREE.LineSegments(qGeo, this.colorClass.getLineQuadTree());
+            qGeo.computeLineDistances();
+            this.quadGraphic.add(this.quadLine);
+            var jointGeo = new THREE.Geometry();
+            for (var i = 0; i < ThreeRenderer.JOINT_PT_MAX; i++)
+                jointGeo.vertices.push(new THREE.Vector3(0, 0, 0));
+            this.jointLine = new THREE.LineSegments(jointGeo, this.colorClass.getLineJoint());
+            jointGeo.computeLineDistances();
+            this.jointGraphic.add(this.jointLine);
             this.renderer.render(this.scene, this.camera);
             if (options.invertY)
                 this.invertYSetup();
+            this.psGeometries = [];
         }
         ThreeRenderer.prototype.invertYSetup = function () {
             this.container.scale.set(1, -1, 1);
             this.quadGraphic.scale.set(1, -1, 1);
             this.overGraphic.scale.set(1, -1, 1);
+            this.jointGraphic.scale.set(1, -1, 1);
             this.camera.position.x = this.options.width * .5;
             this.camera.position.y = this.options.height * -.5;
         };
@@ -1569,17 +1959,47 @@ var box2dp;
         ThreeRenderer.prototype.afterStep = function () { };
         ThreeRenderer.prototype.render = function () {
             var ilen = this.domain.items.length;
+            var jgeo = this.jointLine.geometry;
+            this.jointVerticeCount = 0;
+            this.jointLastPt = null;
             for (var p = 0; p < ilen; p++) {
                 var litem = this.domain.items[p];
                 if (litem.display["three"]) {
                     this.itemDisplayUpdate(litem.display["three"], litem);
                 }
             }
+            for (var t = 0; t < this.domain.particleSystems.length; t++) {
+                var lsys = this.domain.particleSystems[t];
+                var useArray = this.domain.particles[lsys.name];
+                for (var u = 0; u < useArray.length; u++) {
+                    if (useArray[u].display["three"]) {
+                        var display = useArray[u].display["three"];
+                        display.position.set(useArray[u].ix, useArray[u].iy, 0);
+                    }
+                }
+            }
+            if (this.hasDrawType(box2dp.BaseRenderer.DRAW_JOINT)) {
+                this.jointLine.visible = true;
+                if (this.jointLastPt) {
+                    for (var j = this.jointVerticeCount; j < ThreeRenderer.JOINT_PT_MAX; j++)
+                        jgeo.vertices[j].set(this.jointLastPt.x, this.jointLastPt.y, 0);
+                }
+                jgeo.verticesNeedUpdate = true;
+            }
+            else {
+                this.jointLine.visible = false;
+            }
             if (this.hasDrawType(box2dp.BaseRenderer.DRAW_QUAD_TREE) && this.domain.quadTree != null) {
                 this.quadGraphic.visible = true;
-                this.clearQuadTreeGuide();
                 if (this.domain.quadTree.rootNode) {
+                    this.quadVerticeCount = 0;
                     this.drawTreeNode(this.domain.quadTree.rootNode);
+                }
+                this.quadLine.geometry.verticesNeedUpdate = true;
+                if (this.lastQuadPt) {
+                    for (var q = this.quadVerticeCount; q < ThreeRenderer.QUAD_PT_MAX; q++) {
+                        this.quadLine.geometry.vertices[q].set(this.lastQuadPt.x, this.lastQuadPt.y, 0);
+                    }
                 }
             }
             if (!this.hasDrawType(box2dp.BaseRenderer.DRAW_QUAD_TREE)) {
@@ -1589,26 +2009,25 @@ var box2dp;
         };
         ThreeRenderer.prototype.drawTreeNode = function (targetNode) {
             if (targetNode.nodes.length > 0) {
-                for (var i = 0; i < targetNode.nodes.length; i++) {
+                for (var i = 0; i < targetNode.nodes.length; i++)
                     this.drawTreeNode(targetNode.nodes[i]);
-                }
             }
             var ax = box2dp.MakeInfo.mult30(targetNode.x);
             var ay = box2dp.MakeInfo.mult30(targetNode.y);
             var aw = box2dp.MakeInfo.mult30(targetNode.width);
             var ah = box2dp.MakeInfo.mult30(targetNode.height);
-            var lg = new THREE.Geometry();
-            lg.vertices.push(new THREE.Vector3(ax, ay, 0), new THREE.Vector3(ax + aw, ay, 0), new THREE.Vector3(ax + aw, ay + ah, 0), new THREE.Vector3(ax, ay + ah, 0), new THREE.Vector3(ax, ay, 0));
-            var line = new THREE.Line(lg, this.colorClass.getLineQuadTree(), THREE.LineStrip);
-            this.quadGraphic.add(line);
-        };
-        ThreeRenderer.prototype.clearQuadTreeGuide = function () {
-            for (var s = this.quadGraphic.children.length - 1; s > -1; s--) {
-                var loopOne = this.quadGraphic.children[s];
-                this.quadGraphic.remove(loopOne);
-                loopOne["geometry"].dispose();
-                loopOne["geometry"] = undefined;
-            }
+            var si = this.quadVerticeCount;
+            var geo = this.quadLine.geometry;
+            geo.vertices[si].set(ax, ay, 0);
+            geo.vertices[si + 1].set(ax + aw, ay, 0);
+            geo.vertices[si + 2].set(ax + aw, ay, 0);
+            geo.vertices[si + 3].set(ax + aw, ay + ah, 0);
+            geo.vertices[si + 4].set(ax + aw, ay + ah, 0);
+            geo.vertices[si + 5].set(ax, ay + ah, 0);
+            geo.vertices[si + 6].set(ax, ay + ah, 0);
+            geo.vertices[si + 7].set(ax, ay, 0);
+            this.lastQuadPt = new box2d.b2Vec2(ax, ay);
+            this.quadVerticeCount += 8;
         };
         ThreeRenderer.prototype.clearOverShapes = function () {
             for (var s = this.overGraphic.children.length - 1; s > -1; s--) {
@@ -1628,30 +2047,20 @@ var box2dp;
             var it = item;
             var display = new THREE.Object3D();
             display.name = item.name;
-            var gshape = new THREE.Object3D();
-            gshape.name = "shape";
-            var gcenter = new THREE.Object3D();
-            gcenter.position.z = 0.1;
-            gcenter.name = "center";
-            var gboundary = new THREE.Object3D();
-            gboundary.name = "boundary";
-            gboundary.position.z = 0.2;
-            display.add(gshape);
-            gshape.add(gcenter);
-            display.add(gboundary);
             it.display["three"] = display;
             this.container.add(display);
+            var shape3d = new THREE.Object3D();
+            shape3d.name = "shape";
+            display.add(shape3d);
             var ft = it.b2body.GetFixtureList();
             var useMat = this.colorClass.getItemStaticMat();
-            if (it.b2body.GetType() == box2d.b2BodyType.b2_dynamicBody) {
+            if (it.b2body.GetType() == box2d.b2BodyType.b2_dynamicBody)
                 useMat = this.colorClass.getItemDynamicMat();
-            }
-            if (item.type == box2dp.ItemBase.SENSOR)
+            if (item.isSensor)
                 useMat = this.colorClass.getSensorMat();
             var useLineMat = this.colorClass.getLineMatStatic();
-            if (it.b2body.GetType() == box2d.b2BodyType.b2_dynamicBody) {
+            if (it.b2body.GetType() == box2d.b2BodyType.b2_dynamicBody)
                 useLineMat = this.colorClass.getLineMatDynamic();
-            }
             while (ft != null) {
                 switch (ft.GetType()) {
                     case box2d.b2ShapeType.e_circleShape:
@@ -1659,11 +2068,10 @@ var box2dp;
                         var radius = box2dp.MakeInfo.mult30(cir.m_radius);
                         var cirGeo = new THREE.CircleGeometry(radius, 24);
                         var circleMesh = new THREE.Mesh(cirGeo, useMat);
-                        circleMesh.name = "circleMesh";
                         var tox = box2dp.MakeInfo.mult30(cir.m_p.x);
                         var toy = box2dp.MakeInfo.mult30(cir.m_p.y);
                         circleMesh.position.set(tox, toy, 0);
-                        gshape.add(circleMesh);
+                        shape3d.add(circleMesh);
                         break;
                     case box2d.b2ShapeType.e_polygonShape:
                         var polyShape = new THREE.Shape();
@@ -1678,10 +2086,8 @@ var box2dp;
                         }
                         polyShape.lineTo(xtoAt0, ytoAt0);
                         var polyGeometry = new THREE.ShapeGeometry(polyShape);
-                        polyGeometry.name = "polyGeometry";
                         var polyMesh = new THREE.Mesh(polyGeometry, useMat);
-                        polyMesh.name = "polyMesh";
-                        gshape.add(polyMesh);
+                        shape3d.add(polyMesh);
                         break;
                     case box2d.b2ShapeType.e_edgeShape:
                         var lineGeo = new THREE.Geometry();
@@ -1690,9 +2096,8 @@ var box2dp;
                         var x2 = box2dp.MakeInfo.mult30(eg.m_vertex2.x), y2 = box2dp.MakeInfo.mult30(eg.m_vertex2.y);
                         lineGeo.vertices.push(new THREE.Vector3(x1, y1, 0));
                         lineGeo.vertices.push(new THREE.Vector3(x2, y2, 0));
-                        var line = new THREE.Line(lineGeo, useLineMat);
-                        line.name = "edgeLine";
-                        gshape.add(line);
+                        var edgeLine = new THREE.Line(lineGeo, useLineMat);
+                        shape3d.add(edgeLine);
                         break;
                 }
                 ft = ft.GetNext();
@@ -1702,40 +2107,58 @@ var box2dp;
             var geometry = new THREE.Geometry();
             geometry.vertices.push(new THREE.Vector3(ctx, cty, 0), new THREE.Vector3(ctx + 8, cty, 0));
             var line = new THREE.Line(geometry, this.colorClass.getLineCenterXMat());
-            line.name = "centerLineX";
-            gcenter.add(line);
+            line.name = "clx";
+            display.add(line);
             geometry = new THREE.Geometry();
             geometry.vertices.push(new THREE.Vector3(ctx, cty, 0), new THREE.Vector3(ctx, cty + 8, 0));
             var line = new THREE.Line(geometry, this.colorClass.getLineCenterYMat());
-            line.name = "centerLineY";
-            gcenter.add(line);
+            line.name = "cly";
+            display.add(line);
             var bd = item.getBoundary(true, true);
             geometry = new THREE.Geometry();
             geometry.vertices.push(new THREE.Vector3(bd.x, bd.y, 0), new THREE.Vector3(bd.x + bd.w, bd.y, 0), new THREE.Vector3(bd.x + bd.w, bd.y + bd.h, 0), new THREE.Vector3(bd.x, bd.y + bd.h, 0), new THREE.Vector3(bd.x, bd.y, 0));
-            var line = new THREE.Line(geometry, this.colorClass.getLineBoundary(), THREE.LineStrip);
-            line.name = "boundaryLine";
+            var bdline = new THREE.Line(geometry, this.colorClass.getLineBoundary());
+            bdline.name = "boundary";
             geometry.computeLineDistances();
-            gboundary.add(line);
+            display.add(bdline);
             this.itemDisplayUpdate(display, it);
         };
         ThreeRenderer.prototype.onItemRemove = function (item) {
             if (item.display) {
                 if (item.display["three"]) {
                     var threeObj = item.display["three"];
-                    this.disposeShape(threeObj, 0);
                     this.container.remove(threeObj);
+                    this.disposeObj(threeObj.getObjectByName("shape"));
+                    this.disposeObj(threeObj);
                     delete item.display["three"];
                 }
             }
         };
-        ThreeRenderer.prototype.itemDisplayUpdate = function (display, it) {
-            display.position.set(it.ix, it.iy, 0);
-            display.getObjectByName("shape").rotation.set(0, 0, it.ir);
+        ThreeRenderer.prototype.disposeObj = function (object) {
+            var clen = object.children.length;
+            for (var t = clen - 1; t > -1; t--) {
+                var childObj = object.children[t];
+                if (childObj["geometry"]) {
+                    childObj["geometry"].dispose();
+                    childObj["geometry"] = undefined;
+                }
+                if (childObj["material"]) {
+                    childObj["material"].dispose();
+                    childObj["material"] = undefined;
+                }
+                if (childObj.parent)
+                    childObj.parent.remove(childObj);
+            }
+        };
+        ThreeRenderer.prototype.itemDisplayUpdate = function (display, item) {
+            display.position.set(item.ix, item.iy, 0);
+            display.getObjectByName("shape").rotation.set(0, 0, item.ir);
             display.getObjectByName("shape").visible = this.hasDrawType(box2dp.BaseRenderer.DRAW_SHAPE);
-            display.getObjectByName("center").visible = this.hasDrawType(box2dp.BaseRenderer.DRAW_CENTER);
+            display.getObjectByName("clx").visible = this.hasDrawType(box2dp.BaseRenderer.DRAW_CENTER);
+            display.getObjectByName("cly").visible = this.hasDrawType(box2dp.BaseRenderer.DRAW_CENTER);
             display.getObjectByName("boundary").visible = this.hasDrawType(box2dp.BaseRenderer.DRAW_BOUNDARY);
-            var bd = it.getBoundary(true, true);
-            var line = display.getObjectByName("boundary").getObjectByName("boundaryLine");
+            var bd = item.getBoundary(true, true);
+            var line = display.getObjectByName("boundary");
             var geo = line.geometry;
             geo.vertices[0].set(bd.x, bd.y, 0);
             geo.vertices[1].set(bd.x + bd.w, bd.y, 0);
@@ -1743,6 +2166,32 @@ var box2dp;
             geo.vertices[3].set(bd.x, bd.y + bd.h, 0);
             geo.vertices[4].set(bd.x, bd.y, 0);
             geo.verticesNeedUpdate = true;
+            if (this.hasDrawType(box2dp.BaseRenderer.DRAW_JOINT)) {
+                var je = item.b2body.GetJointList();
+                if (je != null) {
+                    var jgeo = this.jointLine.geometry;
+                    for (var jt = je.joint; jt; jt = jt.GetNext()) {
+                        if (jt.GetBodyA().item && jt.GetBodyB().item) {
+                            if (this.simpleJoinDraw(jt)) {
+                                jgeo.vertices[this.jointVerticeCount].set(jt.GetBodyA().item.ix, jt.GetBodyA().item.iy, 0);
+                                jgeo.vertices[this.jointVerticeCount + 1].set(jt.GetBodyB().item.ix, jt.GetBodyB().item.iy, 0);
+                                this.jointLastPt = new box2d.b2Vec2(jt.GetBodyB().item.ix, jt.GetBodyB().item.iy);
+                                this.jointVerticeCount += 2;
+                            }
+                            else if (jt instanceof box2d.b2PulleyJoint) {
+                                jgeo.vertices[this.jointVerticeCount].set(jt.GetBodyA().item.ix, jt.GetBodyA().item.iy, 0);
+                                jgeo.vertices[this.jointVerticeCount + 1].set(box2dp.MakeInfo.mult30(jt.m_groundAnchorA.x), box2dp.MakeInfo.mult30(jt.m_groundAnchorA.y), 0);
+                                jgeo.vertices[this.jointVerticeCount + 2].set(jt.GetBodyB().item.ix, jt.GetBodyB().item.iy, 0);
+                                jgeo.vertices[this.jointVerticeCount + 3].set(box2dp.MakeInfo.mult30(jt.m_groundAnchorB.x), box2dp.MakeInfo.mult30(jt.m_groundAnchorB.y), 0);
+                                jgeo.vertices[this.jointVerticeCount + 4].set(box2dp.MakeInfo.mult30(jt.m_groundAnchorA.x), box2dp.MakeInfo.mult30(jt.m_groundAnchorA.y), 0);
+                                jgeo.vertices[this.jointVerticeCount + 5].set(box2dp.MakeInfo.mult30(jt.m_groundAnchorB.x), box2dp.MakeInfo.mult30(jt.m_groundAnchorB.y), 0);
+                                this.jointLastPt = new box2d.b2Vec2(box2dp.MakeInfo.mult30(jt.m_groundAnchorB.x), box2dp.MakeInfo.mult30(jt.m_groundAnchorB.y));
+                                this.jointVerticeCount += 6;
+                            }
+                        }
+                    }
+                }
+            }
         };
         ThreeRenderer.prototype.getXYFromCamera = function (xto, yto) {
             var vect3 = new THREE.Vector3();
@@ -1755,18 +2204,41 @@ var box2dp;
                 pos.y *= -1;
             return pos;
         };
-        ThreeRenderer.prototype.disposeShape = function (obj, depth) {
-            if (obj["geometry"]) {
-                obj["geometry"].dispose();
-                obj["geometry"] = undefined;
+        ThreeRenderer.prototype.onParticleSystemCreate = function (system, shapeType, color, alpha) {
+            var mat = new THREE.MeshBasicMaterial({ color: color, side: THREE.DoubleSide, opacity: alpha, transparent: true });
+            var psGeo;
+            var radius = box2dp.MakeInfo.mult30(system.GetRadius());
+            if (shapeType == box2dp.MakeInfo.MAKE_BOX_CENTER) {
+                psGeo = new THREE.PlaneGeometry(radius * 2, radius * 2, 1, 1);
             }
-            if (obj instanceof THREE.Object3D) {
-                depth++;
-                for (var s = 0; s < obj.children.length; s++) {
-                    this.disposeShape(obj.children[s], depth);
-                }
+            else {
+                psGeo = new THREE.CircleGeometry(radius, 24);
+            }
+            this.psGeometries[system.name] = { geometry: psGeo, material: mat };
+        };
+        ThreeRenderer.prototype.onParticleCreate = function (item) {
+            var useGeo = this.psGeometries[item.system.name].geometry;
+            var useMat = this.psGeometries[item.system.name].material;
+            if (item.uniqueColor != null) {
+                useMat = new THREE.MeshBasicMaterial({ color: item.uniqueColor, side: THREE.DoubleSide, opacity: item.uniqueAlpha, transparent: true });
+            }
+            var mesh = new THREE.Mesh(useGeo, useMat);
+            this.container.add(mesh);
+            mesh.position.x = item.cx;
+            mesh.position.y = item.cy;
+            item.display["three"] = mesh;
+        };
+        ThreeRenderer.prototype.onParticleDestroy = function (removeOne) {
+            if (removeOne.display["three"]) {
+                var mesh = removeOne.display["three"];
+                this.container.remove(mesh);
+                if (removeOne.uniqueColor != null)
+                    mesh.material.dispose();
+                mesh = null;
             }
         };
+        ThreeRenderer.JOINT_PT_MAX = 100000;
+        ThreeRenderer.QUAD_PT_MAX = 10000;
         return ThreeRenderer;
     })(box2dp.BaseRenderer);
     box2dp.ThreeRenderer = ThreeRenderer;

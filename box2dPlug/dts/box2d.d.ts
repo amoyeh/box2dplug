@@ -576,7 +576,7 @@
 
         localBoundary: { x: number, y: number, w: number, h: number };
 
-        CreateFixture(def: box2d.b2FixtureDef|box2d.b2Shape, density?: number): b2Fixture;
+        CreateFixture(def: box2d.b2FixtureDef | box2d.b2Shape, density?: number): b2Fixture;
         DestroyFixture(fixture: b2Fixture): void;
         SetTransformVecRadians(position: b2Vec2, angle: number): void;
         SetTransformXYRadians(x: number, y: number, angle: number): void;
@@ -630,8 +630,8 @@
         SetFixedRotation(flag: boolean): void;
         IsFixedRotation(): boolean;
         GetFixtureList(): b2Fixture;
-        //FIX GetJointList(): b2JointEdge;
-        //FIX GetContactList(): b2ContactEdge;
+        GetJointList(): b2JointEdge;
+        GetContactList(): b2ContactEdge;
         GetNext(): b2Body;
         GetUserData(): any;
         SetUserData(data: any): void;
@@ -643,9 +643,6 @@
         Dump(): void;
         //FIX GetControllerList(): b2ControllerEdge;
         GetControllerCount(): number;
-
-
-
 
     }
 
@@ -2369,8 +2366,9 @@
     }
 
     export class b2ParticleSystem {
-        public CreateParticle(def: any): void;
-        public DestroyParticle(index: number, callDestructionListener: boolean): void;
+        public CreateParticle(def: any): number;
+        public DestroyParticle(index: number, callDestructionListener?: boolean): void;
+        public DestroyParticleGroup(group: box2d.b2ParticleGroup): void;
         public CreateParticleGroup(groupDef: b2ParticleGroupDef);
         public JoinParticleGroups(groupA: b2ParticleGroup, groupB: b2ParticleGroup);
         public SplitParticleGroup(group: b2ParticleGroup);
@@ -2391,10 +2389,11 @@
         public GetDamping(): number;
         public SetStaticPressureIterations(iterations: number): void;
         public GetStaticPressureIterations(): number;
-        public SetRadius(radius: number): void;
         public GetRadius(): number;
         public GetPositionBuffer(): box2d.b2Vec2[];
+        public SetPositionBuffer(buffer: any, capacity: number): void;
         public GetVelocityBuffer(): box2d.b2Vec2[];
+        public SetVelocityBuffer(buffer: any, capacity: number): void;
         public GetGroupBuffer(): box2d.b2ParticleGroup[];
         public GetWeightBuffer(): number[];
         public GetUserDataBuffer(): any[];
@@ -2406,7 +2405,8 @@
         public GetParticleContactFilter(): any;
         public GetFixtureContactListener(): any;
         public GetParticleContactListener(): any;
-
+        public name: string;
+        public m_count: number;
     }
 
     export class b2ParticleGroupDef {
@@ -2416,7 +2416,7 @@
         public angle: number;
         public linearVelocity: box2d.b2Vec2;
         public angularVelocity: number;
-        public color: any;
+        //public color: any;
         public strength: number;
         public shape: box2d.b2Shape;
         public shapes: box2d.b2Shape[];
@@ -2468,18 +2468,31 @@
         public static b2_staticPressureParticle: number;
         public static b2_reactiveParticle: number;
         public static b2_repulsiveParticle: number;
+        public static b2_fixtureContactListenerParticle: number;
         public static b2_particleContactListenerParticle: number;
         public static b2_fixtureContactFilterParticle: number;
         public static b2_particleContactFilterParticle: number;
+
+
+    }
+
+
+    export class b2ParticleGroupFlag {
+        public static b2_solidParticleGroup: number;
+        public static b2_rigidParticleGroup: number;
+        public static b2_particleGroupCanBeEmpty: number;
+        public static b2_particleGroupWillBeDestroyed: number;
+        public static b2_particleGroupNeedsUpdateDepth: number;
+
     }
 
     export class b2ParticleDef {
         public flags: number;
         public position: box2d.b2Vec2;
         public velocity: box2d.b2Vec2;
-        public color: b2ParticleColor;
         public lifetime: number;
-        public group: box2d.b2ParticleGroup;
+        //public group: box2d.b2ParticleGroup;
+        //public color: b2ParticleColor;
     }
 
     export class b2ParticleColor {
@@ -2494,5 +2507,15 @@
         public Copy(color: b2ParticleColor): void;
         public Clone(): b2ParticleColor;
     }
+
+    export class b2ParticleBodyContact {
+        normal: b2Vec2;
+        index: number;
+        body: b2Body;
+        fixture: b2Fixture;
+        weight: number;
+        mass: number;
+    }
+
 
 }

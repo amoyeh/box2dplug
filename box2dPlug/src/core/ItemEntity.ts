@@ -14,7 +14,9 @@
         public ix: number;
         public iy: number;
         public ir: number;
+        public isSensor: boolean;
         public enableContactEvent: boolean = false;
+        public enableSolveEvent: boolean = false;
         private boundary: { x: number, y: number, w: number, h: number };
         private boundaryMult: { x: number, y: number, w: number, h: number };
 
@@ -31,11 +33,11 @@
             this.type = type;
             this.b2body = b2body;
             this.b2body.item = this;
+            this.dynamic = (this.b2body.GetType() === box2d.b2BodyType.b2_dynamicBody);
             this.setOldPos();
             this.setCurrentPos();
             this.updateBoundary();
             this.display = {};
-            this.enableContactEvent = (this.type == ItemBase.SENSOR);
         }
 
         public setOldPos(): void {
@@ -143,6 +145,17 @@
             this.b2body.item = undefined;
             this.b2body = undefined;
             this.display = undefined;
+        }
+
+        public removeJoints(): void {
+            var je: box2d.b2JointEdge = this.b2body.GetJointList();
+            if (je != null) {
+                let outList: box2d.b2Joint[] = [];
+                for (let jt: box2d.b2Joint = je.joint; jt; jt = jt.GetNext()) {
+                    outList.push(jt);
+                }
+                for (let t: number = 0; t < outList.length; t++) this.b2body.GetWorld().DestroyJoint(outList[t]);
+            }
         }
 
         //public setBodyAngle(radian: number, toDegree: boolean = true): void {

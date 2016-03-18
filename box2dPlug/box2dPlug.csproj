@@ -49,6 +49,7 @@
     <TypeScriptCompile Include="src\core\Event.ts" />
     <TypeScriptCompile Include="src\core\ItemBase.ts" />
     <TypeScriptCompile Include="src\core\ItemEntity.ts" />
+    <TypeScriptCompile Include="src\core\ItemParticle.ts" />
     <TypeScriptCompile Include="src\core\Quad.ts" />
     <TypeScriptCompile Include="src\render\DragControl.ts" />
     <TypeScriptCompile Include="src\maker\BoxMaker.ts" />

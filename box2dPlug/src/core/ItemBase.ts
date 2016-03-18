@@ -9,7 +9,7 @@
         //public static FILTER_STATIC: number = 2;
 
         public static SHAPE: number = 1;
-        public static SENSOR: number = 2;
+        //public static SENSOR: number = 2;
         public static UNIT: number = 3;
         public static PATH: number = 4;
 

@@ -37,6 +37,7 @@
         public static MAKE_CIRCLE: number = 4;
         public static MAKE_EDGE: number = 5;
         public static MAKE_COMPOUND: number = 6;
+        public static MAKE_CHAIN: number = 7;
         //===================================================================================
 
         public name: string;
@@ -69,12 +70,20 @@
         public b2Vertices: box2d.b2Vec2[];
         public userData: any;
         public fixtureData: any;
+        
+        //for chain
+        public chainAmt: number;
+        public chainPinHead: boolean;
+        public chainPinTail: boolean;
+        public chainCollideConnected: boolean;
+        public chainOverlap: number;
 
         constructor(setting: {
             name?: string, itemType?: number, x?: number, y?: number, w?: number, h?: number, radius?: number, createType?: number, allowSleep?: boolean,
             isStatic?: boolean, density?: number, friction?: number, restitution?: number, fixedRotation?: boolean, angle?: number,
             bullet?: boolean, vertices?: { x: number, y: number }[], loopEdge?: boolean, isSensor?: boolean, categoryBits?: number,
-            maskBits?: number, makeInfos?: MakeInfo[], userData?: any, fixtureData?: any
+            maskBits?: number, makeInfos?: MakeInfo[], userData?: any, fixtureData?: any,
+            chainAmt?: number, chainPinHead?: boolean, chainPinTail?: boolean, chainCollideConnected?: boolean, chainOverlap?: number
         }) {
             for (var p in setting) {
                 this[p] = setting[p];

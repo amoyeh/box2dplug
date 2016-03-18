@@ -1,0 +1,104 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <meta charset="utf-8" />
+    <script src="../../lib/box2d.min.js"></script>
+    <script src="../../lib/pixi.min.js"></script>
+    <script src="../../lib/box2dPlug.min.js"></script>
+    <style>
+        body, html {
+            padding: 0px;
+            margin: 0px;
+        }
+    </style>
+
+    <script>
+
+        function init() {
+
+            //create a domain object that contain physic world, with gravity {x:0, y:10},  world step time set to 0.1
+            var domain = new box2dp.Domain({ x: 0, y: 10 }, 0.1);
+
+            //add a pixi renderer in div id pixiScreen
+            var pixiRenderer = new box2dp.PixiRenderer({
+                antialias: false, elementId: "pixiScreen", width: 900, height: 500, transparent: false, backgroundColor: 0xF5F5F5
+            });
+
+            //add pixiRenderer to the domain
+            domain.addRenderer(pixiRenderer);
+
+            //set pixiRenderer draw everything
+            pixiRenderer.drawFlags = box2dp.BaseRenderer.DRAW_ALL;
+
+            //enable drag & drop on pixi testing environment
+            var dragDropPixi = new box2dp.DragControl(pixiRenderer);
+            dragDropPixi.createDragDrop();
+
+
+            //make surrounding wall
+            var wallInfo = new box2dp.MakeInfo({
+                x: 450, y: 0, w: 1200, h: 60, createType: box2dp.MakeInfo.MAKE_BOX_CENTER, fixedRotation: true,
+                isStatic: true, friction: 0
+            });
+            domain.create(wallInfo);
+            wallInfo.y = 500;
+            domain.create(wallInfo);
+            wallInfo.x = 0; wallInfo.y = 250; wallInfo.w = 60; wallInfo.h = 800;
+            domain.create(wallInfo);
+            wallInfo.x = 900;
+            domain.create(wallInfo);
+
+
+            //create a box
+            var boxInfo = new box2dp.MakeInfo({
+                x: 200, y: 100, w: 30, h: 30, restitution: 0.1, createType: box2dp.MakeInfo.MAKE_BOX_CENTER
+            });
+            domain.create(boxInfo);
+
+            //create a circle , passing MakeInfo object directly
+            domain.create(new box2dp.MakeInfo({
+                x: 300, y: 100, radius: 15, restitution: 0.1, createType: box2dp.MakeInfo.MAKE_CIRCLE
+            }));
+
+            //create a box2d static edge, provide local vertices coordinates
+            var edgeInfo = new box2dp.MakeInfo({
+                x: 150, y: 300, vertices: [{ x: 0, y: 0 }, { x: 100, y: -20 }, { x: 200, y: 0 }], createType: box2dp.MakeInfo.MAKE_EDGE, isStatic: true
+            });
+            domain.create(edgeInfo);
+
+            //create a polygon shape
+            var polyInfo = new box2dp.MakeInfo({
+                x: 400, y: 100, vertices: [{ x: 0, y: 0 }, { x: 50, y: 10 }, { x: 60, y: 45 }, { x: 0, y: 40 }], createType: box2dp.MakeInfo.MAKE_POLYGON
+            });
+            domain.create(polyInfo);
+
+            //compound shape that combines different shapes
+            var compound1 = new box2dp.MakeInfo(
+                { x: 0, y: 0, w: 100, h: 20, restitution: 0.2, createType: box2dp.MakeInfo.MAKE_BOX_CENTER });
+            var compound2 = new box2dp.MakeInfo(
+                { x: 50, y: 0, radius: 20, restitution: 0.2, createType: box2dp.MakeInfo.MAKE_CIRCLE });
+            var compound3 = new box2dp.MakeInfo(
+                { x: -50, y: 0, radius: 20, restitution: 0.2, createType: box2dp.MakeInfo.MAKE_CIRCLE });
+            var compound4 = new box2dp.MakeInfo({
+                x: 0, y: -30, restitution: 0.2, createType: box2dp.MakeInfo.MAKE_POLYGON,
+                vertices: [{ x: 0, y: 0 }, { x: 25, y: 30 }, { x: -25, y: 30 }]
+            });
+            var compoundInfo = new box2dp.MakeInfo({
+                x: 600, y: 150, isStatic: false, createType: box2dp.MakeInfo.MAKE_COMPOUND,
+                makeInfos: [compound1, compound2, compound3, compound4]
+            });
+            domain.create(compoundInfo);
+
+            //run the simulation , update physics every 50 milliseconds , update rendering every 25 milliseconds
+            domain.run(50, 25);
+
+        }
+
+    </script>
+
+</head>
+<body onload="init();">
+    <div id="pixiScreen"></div>
+</body>
+</html>

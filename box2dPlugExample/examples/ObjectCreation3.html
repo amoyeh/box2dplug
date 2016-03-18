@@ -1,0 +1,107 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <meta charset="utf-8" />
+    <script src="../../lib/box2d.min.js"></script>
+    <script src="../../lib/pixi.min.js"></script>
+    <script src="../../lib/box2dPlug.min.js"></script>
+    <style>
+        body, html {
+            padding: 0px;
+            margin: 0px;
+        }
+    </style>
+
+    <script>
+
+        function init() {
+
+            var domain = new box2dp.Domain({ x: 0, y: 0 }, 0.1);
+            var pixiRenderer = new box2dp.PixiRenderer({
+                antialias: false, elementId: "pixiScreen", width: 900, height: 500, transparent: false, backgroundColor: 0xF5F5F5
+            });
+            domain.addRenderer(pixiRenderer);
+            pixiRenderer.drawFlags = box2dp.BaseRenderer.DRAW_ALL;
+            var dragDropPixi = new box2dp.DragControl(pixiRenderer);
+            dragDropPixi.createDragDrop();
+
+            //create various MakeInfo that creates different types of object
+            var boxInfo = new box2dp.MakeInfo({
+                w: 30, h: 30, createType: box2dp.MakeInfo.MAKE_BOX_CENTER, itemType: box2dp.ItemBase.SHAPE
+            });
+
+            //circle
+            var circleInfo = new box2dp.MakeInfo({
+                radius: 20, createType: box2dp.MakeInfo.MAKE_CIRCLE, itemType: box2dp.ItemBase.SHAPE
+            });
+
+            //edge object
+            var edgeInfo = new box2dp.MakeInfo({
+                vertices: [{ x: 0, y: 0 }, { x: 30, y: 5 }, { x: 30, y: 25 }, { x: 5, y: 30 }, { x: 0, y: 0 }], createType: box2dp.MakeInfo.MAKE_EDGE,
+                itemType: box2dp.ItemBase.SHAPE
+            });
+
+            //polygon shape
+            var polygonInfo = new box2dp.MakeInfo({
+                vertices: [{ x: 0, y: 0 }, { x: 35, y: 5 }, { x: 30, y: 25 }, { x: -5, y: 30 }, { x: 0, y: 0 }],
+                createType: box2dp.MakeInfo.MAKE_POLYGON, itemType: box2dp.ItemBase.SHAPE
+            });
+
+            //compound shape that combines different shapes
+            var compound1 = new box2dp.MakeInfo(
+                { x: 0, y: 0, w: 40, h: 20, restitution: 0.5, createType: box2dp.MakeInfo.MAKE_BOX_CENTER });
+            var compound2 = new box2dp.MakeInfo(
+                { x: 0, y: 0, radius: 15, restitution: 0.5, createType: box2dp.MakeInfo.MAKE_CIRCLE });
+            var compoundInfo = new box2dp.MakeInfo({
+                isStatic: false, createType: box2dp.MakeInfo.MAKE_COMPOUND, makeInfos: [compound1, compound2]
+            });
+
+            //sensor
+            //create few boxes and circles
+            var sensorInfo = new box2dp.MakeInfo({
+                w: 50, h: 50, createType: box2dp.MakeInfo.MAKE_BOX_CENTER, isSensor: true, name: "sensor"
+            });
+
+            //store this makeInfo in array, to use on object creation loop
+            var infoList = [boxInfo, circleInfo, edgeInfo, polygonInfo, compoundInfo, sensorInfo];
+
+
+            //store all the added class instace
+            var addedItem = [];
+
+            //store position value to add item at different location
+            var loopN = 0;
+
+            function createItem() {
+                var useInfo = infoList[loopN % infoList.length];
+                useInfo.x = 50 + loopN % 10 * 85;
+                useInfo.y = 50 + Math.floor(loopN / 10) * 80;
+                //domain.create() return the created the ItemEntity class instance
+                var createdItem = domain.create(useInfo);
+                addedItem.push(createdItem);
+                loopN++;
+                loopN %= 60;
+                //remove item when total item exceeds 20, by calling domain.removeItem(ItemEntity)
+                if (addedItem.length > 20) {
+                    domain.removeItem(addedItem.shift());
+                }
+            }
+
+            //add Event on AFTER_STEP, trigged when everytime physic world step updated
+            domain.addEvent(box2dp.Event.AFTER_STEP, function () {
+                createItem();
+            });
+
+            //run the simulation , update physics every 50 milliseconds , update rendering every 25 milliseconds
+            domain.run(50, 25);
+
+        }
+
+    </script>
+
+</head>
+<body onload="init();">
+    <div id="pixiScreen"></div>
+</body>
+</html>

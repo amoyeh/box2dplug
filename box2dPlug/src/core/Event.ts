@@ -18,6 +18,15 @@
         public static BEGIN_CONTACT: string = "begin_contact";
         //when contact ends on ItemEntity(enableContactEvent = true) or sensor
         public static END_CONTACT: string = "end_contact";
+        //when pre solve , post solve event occur from box2d
+        public static PRESOLVE: string = "presolve";
+        public static POSTSOLVE: string = "postsolve";
+
+        public static PARTICLE_REMOVED: string = "particleRemoved";
+        public static PARTICLE_CREATED: string = "particleCreated";
+
+        public static PARTICLE_FIXTURE_CONTACT: string = "pfContact";
+        public static PARTICLE_PARTICLE_CONTACT: string = "ppContact";
 
         public type: string;
         public target: any;

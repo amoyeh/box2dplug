@@ -8,10 +8,9 @@
 
             var color = new Color();
 
-            color.BACKGROUND = 0x181818;
             color.ITEM_STATIC = 0x494949;
             color.ITEM_DYNAMIC = 0x808080;
-            color.ITEM_ALPHA = 1;
+            color.ITEM_ALPHA = 0.5;
 
             color.LINE_CENTER_X = 0xFFAD99;
             color.LINE_CENTER_Y = 0xADFF99;
@@ -64,10 +63,9 @@
         }
         //=====================================================================================================
 
-        public BACKGROUND: number = 0xF4F4F4;
         public ITEM_STATIC: number = 0x555555;
-        public ITEM_DYNAMIC: number = 0x888888;
-        public ITEM_ALPHA: number = 1;
+        public ITEM_DYNAMIC: number = 0x999999;
+        public ITEM_ALPHA: number = 0.6;
 
         public LINE_CENTER_X: number = 0xffb9b2;
         public LINE_CENTER_Y: number = 0xc3ffb2;
@@ -114,7 +112,9 @@
         public WANDER_ALPHA: number = 0.3;
 
         public QUADTREE: number = 0x55CCCC;
-        public QUADTREE_A: number = 0.2;
+        public QUADTREE_A: number = 0.8;
+
+        public LINE_JOINT: number = 0xCC3300;
 
         //public rgbaToHex(rgba: string): string {
         //    var rgbData = rgba.match(/^rgba?[\s+]?\([\s+]?(\d+)[\s+]?,[\s+]?(\d+)[\s+]?,[\s+]?(\d+)[\s+]?/i);
@@ -144,82 +144,44 @@
 
         //static material buffer used for three.js
         //========================================================================================
-        protected itemStaticMat: THREE.MeshBasicMaterial;
         public getItemStaticMat(): THREE.MeshBasicMaterial {
-            if (!this.itemStaticMat) {
-                this.itemStaticMat = new THREE.MeshBasicMaterial({ color: this.ITEM_STATIC, side: THREE.DoubleSide, opacity: this.ITEM_ALPHA, transparent: true });
-            }
-            return this.itemStaticMat;
+            return new THREE.MeshBasicMaterial({ color: this.ITEM_STATIC, side: THREE.DoubleSide, opacity: this.ITEM_ALPHA, transparent: true });
         }
-
-        protected itemDynamicMat: THREE.MeshBasicMaterial;
         public getItemDynamicMat(): THREE.MeshBasicMaterial {
-            if (!this.itemDynamicMat) {
-                this.itemDynamicMat = new THREE.MeshBasicMaterial({ color: this.ITEM_DYNAMIC, side: THREE.DoubleSide, opacity: this.ITEM_ALPHA, transparent: true });
-            }
-            return this.itemDynamicMat;
+            return new THREE.MeshBasicMaterial({ color: this.ITEM_DYNAMIC, side: THREE.DoubleSide, opacity: this.ITEM_ALPHA, transparent: true });
         }
 
-        protected lineStaticMat: THREE.LineBasicMaterial;
         public getLineMatStatic(): THREE.LineBasicMaterial {
-            if (!this.lineStaticMat) {
-                this.lineStaticMat = new THREE.LineBasicMaterial({ color: this.ITEM_STATIC, side: THREE.DoubleSide, opacity: this.ITEM_ALPHA, transparent: true, linewidth: 1 });
-            }
-            return this.lineStaticMat;
+            return new THREE.LineBasicMaterial({ color: this.ITEM_STATIC, side: THREE.DoubleSide, opacity: this.ITEM_ALPHA, transparent: true, linewidth: 1 });
         }
 
-        protected lineDynamicMat: THREE.LineBasicMaterial;
         public getLineMatDynamic(): THREE.LineBasicMaterial {
-            if (!this.lineDynamicMat) {
-                this.lineDynamicMat = new THREE.LineBasicMaterial({ color: this.ITEM_DYNAMIC, side: THREE.DoubleSide, opacity: this.ITEM_ALPHA, transparent: true, linewidth: 1 });
-            }
-            return this.lineDynamicMat;
+            return new THREE.LineBasicMaterial({ color: this.ITEM_DYNAMIC, side: THREE.DoubleSide, opacity: this.ITEM_ALPHA, transparent: true, linewidth: 1 });
         }
 
-        protected sensorMat: THREE.MeshBasicMaterial;
         public getSensorMat(): THREE.MeshBasicMaterial {
-            if (!this.sensorMat) {
-                this.sensorMat = new THREE.MeshBasicMaterial({ color: this.SENSOR, side: THREE.DoubleSide, opacity: this.SENSOR_ALPHA, transparent: true });
-            }
-            return this.sensorMat;
+            return new THREE.MeshBasicMaterial({ color: this.SENSOR, side: THREE.DoubleSide, opacity: this.SENSOR_ALPHA, transparent: true });
         }
 
-        protected lineCenterX: THREE.LineBasicMaterial;
         public getLineCenterXMat(): THREE.LineBasicMaterial {
-            if (!this.lineCenterX) {
-                this.lineCenterX = new THREE.LineBasicMaterial({ color: this.LINE_CENTER_X });
-            }
-            return this.lineCenterX;
+            return new THREE.LineBasicMaterial({ color: this.LINE_CENTER_X });
         }
 
-        protected lineCenterY: THREE.LineBasicMaterial;
         public getLineCenterYMat(): THREE.LineBasicMaterial {
-            if (!this.lineCenterY) {
-                this.lineCenterY = new THREE.LineBasicMaterial({ color: this.LINE_CENTER_Y });
-            }
-            return this.lineCenterY;
+            return new THREE.LineBasicMaterial({ color: this.LINE_CENTER_Y });;
         }
 
-        protected lineBoundary: THREE.LineDashedMaterial;
         public getLineBoundary(): THREE.LineDashedMaterial {
-            if (!this.lineBoundary) {
-                this.lineBoundary = new THREE.LineDashedMaterial({
-                    color: this.LINE_BOUNDARY, linewidth: 2, dashSize: 10, gapSize: 5
-                });
-            }
-            return this.lineBoundary;
+            return new THREE.LineDashedMaterial({ color: this.LINE_BOUNDARY, dashSize: 10, gapSize: 5 });;
         }
 
-        protected lineQuadTree: THREE.LineBasicMaterial;
+        public getLineJoint(): THREE.LineBasicMaterial {
+            return new THREE.LineBasicMaterial({ color: this.LINE_JOINT, side: THREE.DoubleSide, transparent: true });;
+        }
+
         public getLineQuadTree(): THREE.LineBasicMaterial {
-            if (!this.lineQuadTree) {
-                this.lineQuadTree = new THREE.LineBasicMaterial({ color: this.QUADTREE, side: THREE.DoubleSide, opacity: this.QUADTREE_A, transparent: true });
-            }
-            return this.lineQuadTree;
+            return new THREE.LineBasicMaterial({ color: this.QUADTREE, side: THREE.DoubleSide, opacity: this.QUADTREE_A, transparent: true });
         }
-
-        LineQuadTreeMaterial 
-        //========================================================================================
 
     }
 

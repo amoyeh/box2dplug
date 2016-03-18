@@ -91,7 +91,7 @@ box2d.DebugDraw.prototype.DrawParticles = function (centers, radius, colors, cou
         }
     }
     else {
-        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        ctx.fillStyle = 'rgba(30,30,30,0.5)';
         ctx.beginPath();
         for (var i = 0; i < count; ++i) {
             var center = centers[i];

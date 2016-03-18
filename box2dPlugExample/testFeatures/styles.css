@@ -1,27 +1,45 @@
 ﻿body {
     padding: 0px;
+    margin: 0px;
     background: #FFFFFF;
+    font-family: 'Martel Sans', sans-serif;
+    font-weight: 600;
+    color: #179e86;
+    background: url('bg.png') repeat left top;
 }
 
-#pixiScreen, #threeScreen, #canvasScreen {
+#wrapper {
+    margin: auto;
     width: 900px;
-    height: 600px;
-    float: left;
-    margin-left: 10px;
-    margin-top: 10px;
 }
 
-.clearFloat:after {
-    content: "";
-    display: table;
-    clear: both;
+#canvasScreen, #pixiScreen, #threeScreen {
+    width: 900px;
+    height: 700px;
+    border: 4px solid #999;
+    border-radius: 4px;
+    margin-bottom: 100px;
 }
 
-input[type=button] {
+.rendererTitle {
+    width: 900px;
+    margin: auto;
+    margin: 10px auto 0px auto;
+    font-size: 24px;
+}
+
+.h200 {
+    height: 200px;
+}
+
+#debugDiv {
+    position: fixed;
+    right: 50px;
+    top: 0px;
+    width: 150px;
+    height: 100px;
+    background: #333;
+    color: #FFF;
+    font-size: 11px;
     padding: 10px;
-}
-
-.toolDiv {
-    margin-left: 10px;
-    margin-top: 10px;
 }

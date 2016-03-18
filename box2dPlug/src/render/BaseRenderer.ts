@@ -18,6 +18,9 @@
         public static DRAW_CENTER: number = 1 << 2;
         public static DRAW_BOUNDARY: number = 1 << 3;
         public static DRAW_QUAD_TREE: number = 1 << 4;
+        public static DRAW_JOINT: number = 1 << 5;
+
+        public static DRAW_ALL: number = BaseRenderer.DRAW_SHAPE | BaseRenderer.DRAW_CENTER | BaseRenderer.DRAW_BOUNDARY | BaseRenderer.DRAW_QUAD_TREE | BaseRenderer.DRAW_JOINT;
 
         public drawFlags: number = BaseRenderer.DRAW_SHAPE;
         public domain: Domain;
@@ -48,6 +51,14 @@
             return ((this.drawFlags & checkType) == checkType);
         }
 
+        protected simpleJoinDraw(jt: box2d.b2Joint): boolean {
+            var types = [box2d.b2RevoluteJoint, box2d.b2WeldJoint, box2d.b2PrismaticJoint, box2d.b2FrictionJoint,
+                box2d.b2AreaJoint, box2d.b2WheelJoint, box2d.b2GearJoint, box2d.b2DistanceJoint, box2d.b2MotorJoint];
+            for (var t: number = 0; t < types.length; t++) {
+                if (jt instanceof types[t]) return true;
+            }
+            return false;
+        }
 
         public beforeStep(): void { }
         public afterStep(): void { }
@@ -55,6 +66,9 @@
 
         public onItemCreate(item: ItemEntity): void { };
         public onItemRemove(item: ItemEntity): void { };
+        public onParticleSystemCreate(system: box2d.b2ParticleSystem, shapeType: number, color: number, alpha: number): void { };
+        public onParticleCreate(item: ItemParticle): void { };
+        public onParticleDestroy(removeOne: ItemParticle): void { };
 
     }
 

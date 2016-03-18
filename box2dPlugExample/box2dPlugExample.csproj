@@ -23,14 +23,34 @@
     <Service Include="{4A0DDDB5-7A95-4FBF-97CC-616D07737A77}" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="examples\ObjectCreation.html" />
+    <Content Include="examples\ObjectCreation2.html" />
+    <Content Include="examples\ObjectCreation3.html" />
     <Content Include="lib\box2dPlug.min.js" />
-    <Content Include="testFeatures\useCdn.html" />
+    <Content Include="testFeatures\basic\Joints.html" />
+    <Content Include="testFeatures\basic\ObjectCreation.html" />
+    <Content Include="testFeatures\%40old\JointBasic.html" />
+    <Content Include="testFeatures\%40old\useCdn.html" />
+    <Content Include="testFeatures\basic\RemoveItems.html" />
+    <Content Include="testFeatures\basic\RemoveJoints.html" />
+    <Content Include="testFeatures\basic\Rope.html" />
+    <Content Include="testFeatures\collision\CollisionEvent.html" />
+    <Content Include="testFeatures\collision\CollisionFilter.html" />
+    <Content Include="testFeatures\liquid\liquidBasic.html" />
+    <Content Include="testFeatures\liquid\liquidContact.html" />
+    <Content Include="testFeatures\liquid\liquidEmit.html" />
+    <Content Include="testFeatures\liquid\liquidGroup.html" />
+    <Content Include="testFeatures\liquid\liquidGroupRemove.html" />
+    <Content Include="testFeatures\liquid\liquidRemove.html" />
+    <Content Include="testFeatures\liquid\liquidTypes.html" />
+    <Content Include="testFeatures\test\testCrank.html" />
+    <Content Include="testFeatures\todo.txt" />
     <Content Include="website\normalize.css" />
-    <Content Include="testFeatures\basicCreate.html" />
-    <Content Include="testFeatures\addRemove.html" />
-    <Content Include="testFeatures\CustomRender.html" />
-    <Content Include="testFeatures\QuadTree.html" />
-    <Content Include="testFeatures\Sensor.html" />
+    <Content Include="testFeatures\%40old\basicCreate.html" />
+    <Content Include="testFeatures\%40old\addRemove.html" />
+    <Content Include="testFeatures\%40old\CustomRender.html" />
+    <Content Include="testFeatures\%40old\QuadTree.html" />
+    <Content Include="testFeatures\%40old\Sensor.html" />
     <Content Include="testFeatures\styles.css" />
     <Content Include="lib\box2d.min.js" />
     <Content Include="lib\box2dPlug.js" />
@@ -61,15 +81,32 @@
     <TypeScriptCompile Include="dts\pixi.js.d.ts" />
     <TypeScriptCompile Include="dts\stats.d.ts" />
     <TypeScriptCompile Include="dts\three.d.ts" />
-    <TypeScriptCompile Include="src\CustomRenderer.ts" />
-    <TypeScriptCompile Include="testFeatures\addRemove.ts" />
-    <TypeScriptCompile Include="testFeatures\basicCreate.ts" />
-    <TypeScriptCompile Include="testFeatures\CustomRenderer.ts" />
-    <TypeScriptCompile Include="testFeatures\CustomRenderPage.ts" />
-    <TypeScriptCompile Include="testFeatures\QuadTreePage.ts" />
-    <TypeScriptCompile Include="testFeatures\SensorPage.ts" />
-    <TypeScriptCompile Include="src\CustomColor.ts" />
-    <TypeScriptCompile Include="website\websiteRender.ts" />
+    <TypeScriptCompile Include="testFeatures\test\testCrank.ts" />
+    <TypeScriptCompile Include="website\src\CustomRenderer.ts" />
+    <TypeScriptCompile Include="testFeatures\%40old\addRemove.ts" />
+    <TypeScriptCompile Include="testFeatures\%40old\basicCreate.ts" />
+    <TypeScriptCompile Include="testFeatures\basic\Joints.ts" />
+    <TypeScriptCompile Include="testFeatures\basic\ObjectCreation.ts" />
+    <TypeScriptCompile Include="testFeatures\basic\RemoveItems.ts" />
+    <TypeScriptCompile Include="testFeatures\basic\RemoveJoints.ts" />
+    <TypeScriptCompile Include="testFeatures\basic\Rope.ts" />
+    <TypeScriptCompile Include="testFeatures\collision\CollisionEvent.ts" />
+    <TypeScriptCompile Include="testFeatures\collision\CollisionFilter.ts" />
+    <TypeScriptCompile Include="testFeatures\common.ts" />
+    <TypeScriptCompile Include="testFeatures\%40old\CustomRenderer.ts" />
+    <TypeScriptCompile Include="testFeatures\%40old\CustomRenderPage.ts" />
+    <TypeScriptCompile Include="testFeatures\%40old\JointBasic.ts" />
+    <TypeScriptCompile Include="testFeatures\%40old\QuadTreePage.ts" />
+    <TypeScriptCompile Include="testFeatures\%40old\SensorPage.ts" />
+    <TypeScriptCompile Include="website\src\CustomColor.ts" />
+    <TypeScriptCompile Include="testFeatures\liquid\liquidBasic.ts" />
+    <TypeScriptCompile Include="testFeatures\liquid\liquidContact.ts" />
+    <TypeScriptCompile Include="testFeatures\liquid\liquidEmit.ts" />
+    <TypeScriptCompile Include="testFeatures\liquid\liquidGroup.ts" />
+    <TypeScriptCompile Include="testFeatures\liquid\liquidGroupRemove.ts" />
+    <TypeScriptCompile Include="testFeatures\liquid\liquidRemove.ts" />
+    <TypeScriptCompile Include="testFeatures\liquid\liquidTypes.ts" />
+    <TypeScriptCompile Include="website\src\websiteRender.ts" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System.Data.DataSetExtensions" />
@@ -79,9 +116,7 @@
     <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="examples\" />
-  </ItemGroup>
+  <ItemGroup />
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">12.0</VisualStudioVersion>
   </PropertyGroup>
