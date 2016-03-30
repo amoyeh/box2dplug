@@ -9,3 +9,8 @@ box2dPlugExample/bin
 box2dPlugExample/obj
 box2dPlugExample/testFeatures
 box2dPlugExample/website
+box2dPlugExample/*.csproj
+box2dPlugExample/*.csproj.user
+box2dPlugExample/*.config
+**/*.suo
+.gitignore
