@@ -1,0 +1,45 @@
+﻿
+- SetupRenderers2
+[v] dynamic color options, custom color class
+[v] drawFlags
+
+
+- Motion integration
+[-] step interval & render interval
+[-] simi-timestep method http://gafferongames.com/game-physics/fix-your-timestep/
+
+[v] Custom Renderers
+
+
+- Using Joints
+[v] joint types
+
+
+- Liquidfun
+[v] liquid creation
+[v] liquid emitter & remove
+[v] liquid group & remove
+[v] liquid events
+
+
+- Collision Handling
+[v] Sensor Events
+[v] Collision Event
+[v] Collision Filter
+
+- Example PinBall
+
+extra example to sell $25
+- platformer
+- liquid fun beer
+- liquid fun particle
+- car parking
+- GUI examples
+	rope menu
+	elastic ball menu
+	particle splash menu
+
+
+
+
+

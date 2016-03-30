@@ -137,7 +137,7 @@ module box2dp {
             } else {
                 name = this.getUniqueName(name);
             }
-            var newItem: ItemEntity = new ItemEntity(this.maker.create(makeInfo), makeInfo.itemType, name);
+            var newItem: ItemEntity = new ItemEntity(this.maker.create(makeInfo), name);
             if (makeInfo.isSensor) newItem.isSensor = true;
             this.items.push(newItem);
             for (var k: number = 0; k < this.rlen; k++) this.renderers[k].onItemCreate(newItem);
@@ -198,7 +198,7 @@ module box2dp {
             if (this.quadTree) {
                 this.quadTree.clear();
                 for (var p: number = 0; p < ilen; p++) {
-                    //intergate old value at a full 100 percent old x,y and rotation
+                    //integrate old value at a full 100 percent old x,y and rotation
                     var itemSel: QuadSelector = this.quadTree.getItemSelector(this.items[p]);
                     if (itemSel) {
                         this.quadTree.insert(itemSel);
@@ -208,7 +208,7 @@ module box2dp {
             }
 
             for (var p: number = 0; p < ilen; p++) {
-                //intergate old value at a full 100 percent old x,y and rotation
+                //integrate old value at a full 100 percent old x,y and rotation
                 this.items[p].integratePos(1);
                 this.items[p].setOldPos();
             }

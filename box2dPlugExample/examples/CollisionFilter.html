@@ -1,0 +1,109 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <meta charset="utf-8" />
+    <script src="../../lib/box2d.min.js"></script>
+    <script src="../../lib/pixi.min.js"></script>
+    <script src="../../lib/box2dPlug.min.js"></script>
+    <style>
+        body, html {
+            padding: 0px;
+            margin: 0px;
+        }
+    </style>
+
+    <script>
+
+        function init() {
+
+            //create a domain object that contain physic world, with gravity {x:0, y:10},  world step time set to 0.1
+            var domain = new box2dp.Domain({ x: 0, y: 10 }, 0.1);
+
+            //add a PixiRenderer in div id pixiScreen
+            var pixiRenderer = new box2dp.PixiRenderer({
+                antialias: false, elementId: "pixiScreen", width: 900, height: 500, transparent: false, backgroundColor: 0xF5F5F5
+            });
+
+            //add pixiRenderer to the domain
+            domain.addRenderer(pixiRenderer);
+
+            //set pixiRenderer draw everything
+            pixiRenderer.drawFlags = box2dp.BaseRenderer.DRAW_ALL;
+
+            //enable drag & drop on Pixi.js testing environment
+            var dragDropPixi = new box2dp.DragControl(pixiRenderer);
+            dragDropPixi.createDragDrop();
+
+            // collision filter explaination
+            // http://www.iforce2d.net/b2dtut/collision-filtering
+            //  categoryBits -> means I am a....
+            //  maskBits     -> means I collide with
+            //  both need to fully satisfied for collision to occur
+
+            var CAT_WALL = 1 << 1;
+            var CAT_BOX = 1 << 2;
+            var CAT_CIRCLE = 1 << 3;
+            var CAT_POLY = 1 << 4;
+
+
+            //make surrounding wall,  all walls set to Wall category -> categoryBits: CAT_WALL
+            var wallInfo = new box2dp.MakeInfo({
+                x: 450, y: 0, w: 1200, h: 60, createType: box2dp.MakeInfo.MAKE_BOX_CENTER, fixedRotation: true,
+                isStatic: true, categoryBits: CAT_WALL
+            });
+            domain.create(wallInfo);
+            wallInfo.y = 500;
+            domain.create(wallInfo);
+            wallInfo.x = 0; wallInfo.y = 250; wallInfo.w = 60; wallInfo.h = 800;
+            domain.create(wallInfo);
+            wallInfo.x = 900;
+            domain.create(wallInfo);
+
+
+            //create 3 boxes, collide with wall and other boxes and polygons
+            var boxInfo = new box2dp.MakeInfo({
+                x: 100, y: 400, w: 60, h: 60, createType: box2dp.MakeInfo.MAKE_BOX_CENTER, categoryBits: CAT_BOX, maskBits: CAT_WALL | CAT_BOX | CAT_POLY
+            });
+            domain.create(boxInfo);
+            boxInfo.x = 200;
+            domain.create(boxInfo);
+            boxInfo.x = 300;
+            domain.create(boxInfo);
+
+
+            //create 3 circles, collide with wall and other circles and polygons
+            var circleInfo = new box2dp.MakeInfo({
+                x: 400, y: 400, radius: 30, createType: box2dp.MakeInfo.MAKE_CIRCLE, categoryBits: CAT_CIRCLE, maskBits: CAT_WALL | CAT_CIRCLE | CAT_POLY
+            });
+            domain.create(circleInfo);
+            circleInfo.x = 500;
+            domain.create(circleInfo);
+            circleInfo.x = 600;
+            domain.create(circleInfo);
+
+
+            //create 2 polygons , collide with everything but polygons
+            var polyInfo = new box2dp.MakeInfo({
+                x: 700, y: 400, vertices: [{ x: 0, y: 0 }, { x: 50, y: -10 }, { x: 60, y: 45 }, { x: 0, y: 40 }],
+                createType: box2dp.MakeInfo.MAKE_POLYGON, categoryBits: CAT_POLY,
+                maskBits: CAT_WALL | CAT_CIRCLE | CAT_BOX
+            });
+            domain.create(polyInfo);
+            polyInfo.x = 800;
+            domain.create(polyInfo);
+
+            //run the simulation , update physics every 50 milliseconds , update rendering every 25 milliseconds
+            domain.run(50, 25);
+
+        }
+
+    </script>
+
+</head>
+<body onload="init();">
+    <div id="pixiScreen"></div>
+</body>
+</html>
+
+

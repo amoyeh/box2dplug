@@ -1,0 +1,167 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <meta charset="utf-8" />
+    <script src="../../lib/box2d.min.js"></script>
+    <script src="../../lib/pixi.min.js"></script>
+    <script src="../../lib/three.min.js"></script>
+    <script src="../../lib/box2dPlug.js"></script>
+    <style>
+        body, html {
+            padding: 5px;
+            margin: 0px;
+            font: 15px sans-serif;
+        }
+
+        label {
+            margin-right: 10px;
+        }
+
+        h5 {
+            margin: 10px;
+            padding: 0px;
+        }
+
+        .divContent {
+            float: left;
+            width: 450px;
+            height: auto;
+            margin-right: 10px;
+        }
+
+        .divControls {
+            float: left;
+            font-size: 15px;
+        }
+    </style>
+
+    <script>
+
+
+        function init() {
+
+            //create a domain object that contain physic world, with gravity {x:0, y:10},  world step time set to 0.1
+            var domain = new box2dp.Domain({ x: 0, y: 10 }, 0.1);
+
+            //add a PixiRenderer in div id "pixiScreen"
+            var pixiRenderer = new box2dp.PixiRenderer({
+                antialias: false, elementId: "pixiScreen", width: 450, height: 500,
+                transparent: false, backgroundColor: 0xF5F5F5
+            });
+            //add pixiRenderer to the domain
+            domain.addRenderer(pixiRenderer);
+            //set pixiRenderer draw everything
+            pixiRenderer.drawFlags = box2dp.BaseRenderer.DRAW_ALL;
+            //enable drag & drop on Pixi.js testing environment
+            var dragDropPixi = new box2dp.DragControl(pixiRenderer);
+            dragDropPixi.createDragDrop();
+
+            //add a three.js renderer in div id "threeScreen"
+            var threeRenderer = new box2dp.ThreeRenderer({
+                antialias: false, elementId: "threeScreen", width: 450, height: 500, invertY: true, transparent: false, backgroundColor: 0xF5F5F5
+            });
+            //add threeRenderer to the domain
+            domain.addRenderer(threeRenderer);
+            //set threeRenderer draw everything
+            threeRenderer.drawFlags = box2dp.BaseRenderer.DRAW_ALL;
+            //enable drag & drop on three.js testing environment
+            var tcThree = new box2dp.DragControl(threeRenderer);
+            tcThree.createDragDrop();
+
+            //MakeInfo contain the commands of how to create the physic object.
+            //following line create a setting for static wall on top. (for quick web based physic environment, MakeInfo uses pixels based measurement)
+            var wallInfo = new box2dp.MakeInfo({
+                x: 225, y: 15, w: 450, h: 30, createType: box2dp.MakeInfo.MAKE_BOX_CENTER, fixedRotation: true,
+                isStatic: true, friction: 0
+            });
+            //create the physic object in domain
+            domain.create(wallInfo);
+
+
+            //create surrounding walls
+            wallInfo.y = 485;
+            domain.create(wallInfo);
+            wallInfo = new box2dp.MakeInfo({
+                x: 15, y: 250, w: 30, h: 500, createType: box2dp.MakeInfo.MAKE_BOX_CENTER, fixedRotation: true, isStatic: true, friction: 0
+            });
+            domain.create(wallInfo);
+            wallInfo.x = 435;
+            domain.create(wallInfo);
+
+            //create a box , angle 0.5236 radians is about 30 degree
+            var boxInfo = new box2dp.MakeInfo({
+                x: 100, y: 100, w: 60, h: 60, angle: 0.5236, createType: box2dp.MakeInfo.MAKE_BOX_CENTER
+            });
+            domain.create(boxInfo);
+
+            //create a circle , following line passing MakeInfo object directly
+            domain.create(new box2dp.MakeInfo({
+                x: 200, y: 100, radius: 30, createType: box2dp.MakeInfo.MAKE_CIRCLE
+            }));
+
+            //create a polygon
+            var polygonItem = domain.create(new box2dp.MakeInfo({
+                x: 300, y: 200,createType: box2dp.MakeInfo.MAKE_POLYGON,
+                vertices: [{ x: 0, y: 0 }, { x: 45, y: 50 }, { x: -45, y: 50 }]
+            }));
+
+            //create a joint center
+            var polygonCenter = domain.create(new box2dp.MakeInfo({
+                x: 300, y: 120, createType: box2dp.MakeInfo.MAKE_CIRCLE, radius: 6, isStatic: true
+            }));
+            //create a RevoluteJoint on polygon , joints are features in box2d
+            var rjd = new box2d.b2RevoluteJointDef();
+            rjd.collideConnected = false;
+            rjd.maxMotorTorque = 30;
+            rjd.motorSpeed = 5;
+            rjd.enableMotor = true;
+            rjd.Initialize(polygonCenter.b2body, polygonItem.b2body, polygonItem.b2body.GetPosition());
+            domain.createJoint(rjd);
+
+
+            //run the simulation , update physics every 50 milliseconds , update rendering every 25 milliseconds
+            domain.run(50, 25);
+
+            //UI to test draw flags
+            var ckInputs = document.getElementsByClassName("divCheckboxes")[0].getElementsByTagName("input");
+            function inputChangeUpdate() {
+                var drawFlag = 0;
+                for (var i = 0; i < ckInputs.length; i++) {
+                    if (ckInputs[i].checked) {
+                        if (ckInputs[i].value == "DRAW_SHAPE") drawFlag |= box2dp.BaseRenderer.DRAW_SHAPE;
+                        if (ckInputs[i].value == "DRAW_CENTER") drawFlag |= box2dp.BaseRenderer.DRAW_CENTER;
+                        if (ckInputs[i].value == "DRAW_BOUNDARY") drawFlag |= box2dp.BaseRenderer.DRAW_BOUNDARY;
+                        if (ckInputs[i].value == "DRAW_JOINT") drawFlag |= box2dp.BaseRenderer.DRAW_JOINT;
+                    }
+                }
+                pixiRenderer.drawFlags = drawFlag;
+                threeRenderer.drawFlags = drawFlag;
+            }
+            for (var k = 0; k < ckInputs.length; k++) {
+                ckInputs[k].addEventListener("change", inputChangeUpdate);
+            }
+
+        }
+
+    </script>
+
+</head>
+<body onload="init();">
+
+    <div class="divCheckboxes">
+        <label><input type="checkbox" checked="checked" value="DRAW_SHAPE" />DRAW_SHAPE</label>
+        <label><input type="checkbox" checked="checked" value="DRAW_CENTER" />DRAW_CENTER</label>
+        <label><input type="checkbox" checked="checked" value="DRAW_BOUNDARY" />DRAW_BOUNDARY</label>
+        <label><input type="checkbox" checked="checked" value="DRAW_JOINT" />DRAW_JOINT</label>
+    </div>
+    <div class="divContent">
+        <h5>pixi.js renderer</h5>
+        <div id="pixiScreen"></div>
+    </div>
+    <div class="divContent">
+        <h5>three.js renderer</h5>
+        <div id="threeScreen"></div>
+    </div>
+</body>
+</html>

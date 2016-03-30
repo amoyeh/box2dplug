@@ -1,0 +1,259 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <meta charset="utf-8" />
+    <script src="../../lib/box2d.min.js"></script>
+    <script src="../../lib/pixi.min.js"></script>
+    <script src="../../lib/box2dPlug.js"></script>
+    <style>
+        body, html {
+            padding: 5px;
+            margin: 0px;
+            font: 18px sans-serif;
+        }
+
+        h5 {
+            margin: 10px;
+            padding: 0px;
+        }
+
+        .divContent {
+            float: left;
+            width: 900px;
+            height: auto;
+            margin-right: 10px;
+        }
+    </style>
+
+    <script>
+
+        //this function is for extending box2dp's Classes in javascript.
+        //If you use Typescript, you can simply extend target class instead.
+        var __extends = (this && this.__extends) || function (d, b) {
+            for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+            function __() { this.constructor = d; }
+            __.prototype = b.prototype;
+            d.prototype = new __();
+        };
+
+
+        //create a CustomRenderer class that extends box2dp.BaseRenderer
+        var CustomRenderer = (function (_super) {
+
+            //extend BaseRenderer
+            __extends(CustomRenderer, _super);
+
+            //this example we use images to display shape, variables store texture reference
+            var greenBallTexture;
+            var redBallTexture;
+            var blueBoxTexture;
+            var triangleTexture;
+
+            //custom render constructor, setup custom pixi scene
+            function CustomRenderer(options) {
+
+                var _this = this;
+                _super.call(this, options);
+
+                var renderObj = { antialias: false, transparent: false };
+                if (options.antialias) renderObj.antialias = true;
+                if (options.transparent) renderObj.transparent = true;
+                this.renderer = PIXI.autoDetectRenderer(options.width, options.height, renderObj);
+                if ((!options.transparent) && options.backgroundColor) this.renderer.backgroundColor = options.backgroundColor;
+
+                this.useElement.appendChild(this.renderer.view);
+                this.scene = new PIXI.Container();
+                this.container = new PIXI.Container();
+                this.scene.addChild(this.container);
+
+                greenBallTexture = PIXI.Texture.fromImage('http://amoyeh.co/box2dplug/resource/customRenderImg/ballGreen.png');
+                redBallTexture = PIXI.Texture.fromImage('http://amoyeh.co/box2dplug/resource/customRenderImg/ballRed.png');
+                blueBoxTexture = PIXI.Texture.fromImage('http://amoyeh.co/box2dplug/resource/customRenderImg/boxBlue.png');
+                triangleTexture = PIXI.Texture.fromImage('http://amoyeh.co/box2dplug/resource/customRenderImg/triangleYellow.png');
+            }
+
+            //[override BaseRenderer function] this is called when rendering the scene 
+            CustomRenderer.prototype.render = function () {
+                this.renderer.render(this.scene);
+                var ilen = this.domain.items.length;
+                for (var p = 0; p < ilen; p++) {
+                    var litem = this.domain.items[p];
+                    //if we have display reference. (this is added from onItemCreate() function)
+                    if (litem.display["custom"]) {
+                        //setting x , y and rotation from ItemEntity's current integrated x y and rotation, property -> ix, iy, ir
+                        litem.display["custom"].x = litem.ix;
+                        litem.display["custom"].y = litem.iy;
+                        litem.display["custom"].rotation = litem.ir;
+                    }
+                }
+            };
+
+            //[override BaseRenderer function] , when item created (passing ItemEntity class)
+            CustomRenderer.prototype.onItemCreate = function (itemEntity) {
+
+                //get userData that was created in MakeInfo
+                var userData = itemEntity.b2body.GetUserData();
+
+                //for this example , we create a new property drawType, used for custom renderer to decide what to draw
+                if (userData) {
+                    switch (userData.drawType) {
+                        case "wall":
+                            this.drawStaticWall(itemEntity);
+                            break;
+
+                        case "ballGreen":
+                        case "ballRed":
+                        case "boxBlue":
+                        case "triangle":
+
+                            var useTexture = greenBallTexture;
+                            if (userData.drawType == "ballRed") useTexture = redBallTexture;
+                            if (userData.drawType == "boxBlue") useTexture = blueBoxTexture;
+                            if (userData.drawType == "triangle") useTexture = triangleTexture;
+
+                            //add green ball png
+                            var sprite = new PIXI.Sprite(useTexture);
+                            sprite.anchor.x = 0.5;
+                            sprite.anchor.y = 0.5;
+                            this.scene.addChild(sprite);
+                            itemEntity.display["custom"] = sprite;
+                            sprite.x = itemEntity.ix;
+                            sprite.y = itemEntity.iy;
+                            sprite.rotation = itemEntity.ir;
+
+                            break;
+                    }
+                }
+            };
+
+            //use Pixi.js graphic to draw box2d shapes
+            CustomRenderer.prototype.drawStaticWall = function (itemEntity) {
+                //get the box2d fixture that used on this class.
+                //only one fixture was created in this example, simply use it to draw the rectangle
+                var fixture = itemEntity.b2body.GetFixtureList();
+                //b2PolygonShape created for this fixture
+                var shape = fixture.GetShape();
+
+                //create a new PIXI Graphics to draw the fixture shape
+                var graphic = new PIXI.Graphics();
+                graphic.lineWidth = 0;
+                graphic.beginFill(0x222222, 1);
+                var xtoAt0 = box2dp.MakeInfo.mult30(shape.m_vertices[0].x);
+                var ytoAt0 = box2dp.MakeInfo.mult30(shape.m_vertices[0].y);
+                graphic.moveTo(xtoAt0, ytoAt0);
+                for (var m = 0; m < shape.m_count; m++) {
+                    var xto = box2dp.MakeInfo.mult30(shape.m_vertices[m].x);
+                    var yto = box2dp.MakeInfo.mult30(shape.m_vertices[m].y);
+                    graphic.lineTo(xto, yto);
+                }
+                graphic.lineTo(xtoAt0, ytoAt0);
+                graphic.endFill();
+                this.scene.addChild(graphic);
+
+                //created pixi graphic is added in display reference
+                itemEntity.display["custom"] = graphic;
+            };
+
+            //[override BaseRenderer function] , when item removed (passing ItemEntity class)
+            CustomRenderer.prototype.onItemRemove = function (itemEntity) {
+                if (itemEntity.display["custom"]) {
+                    this.scene.removeChild(itemEntity.display["custom"]);
+                }
+            };
+            return CustomRenderer;
+
+        })(box2dp.BaseRenderer);
+
+
+
+        function init() {
+
+            //create a domain object that contain physic world, with gravity {x:0, y:10},  world step time set to 0.1
+            var domain = new box2dp.Domain({ x: 0, y: 10 }, 0.1);
+
+            //add a custom renderer in div id "customScreen"
+            var customRenderer = new CustomRenderer({
+                antialias: false, elementId: "customScreen", width: 900, height: 500, transparent: false, backgroundColor: 0x333333
+            });
+            domain.addRenderer(customRenderer);
+
+            //enable drag and drop controls
+            var dragDropCtrl = new box2dp.DragControl(customRenderer);
+            //since we know we are extending pixi class, use createPixiDragDrop()
+            dragDropCtrl.createPixiDragDrop();
+
+
+            //surrounding walls
+            var leftWall = domain.create(new box2dp.MakeInfo({
+                x: 700, y: 400, w: 350, h: 15, angle: -0.1, createType: box2dp.MakeInfo.MAKE_BOX_CENTER,
+                friction: 0, isStatic: true, userData: { drawType: "wall" }
+            }));
+            var rightWall = domain.create(new box2dp.MakeInfo({
+                x: 200, y: 400, w: 350, h: 15, angle: 0.1, createType: box2dp.MakeInfo.MAKE_BOX_CENTER,
+                friction: 0, isStatic: true, userData: { drawType: "wall" }
+            }));
+
+
+            var addPos = 0;
+            var itemList = [];
+            function addItem() {
+                var xto = 100 + (addPos % 8) * 100;
+                var createdItem;
+                switch (addPos % 3) {
+                    case 0:
+                        //add green ball
+                        createdItem = domain.create(new box2dp.MakeInfo({
+                            x: xto, y: 50, radius: 30, restitution: 0.2, createType: box2dp.MakeInfo.MAKE_CIRCLE,
+                            userData: { drawType: "ballGreen" }
+                        }));
+                        break;
+                    case 1:
+                        //add red ball
+                        createdItem = domain.create(new box2dp.MakeInfo({
+                            x: xto, y: 150, radius: 30, restitution: 0.5, createType: box2dp.MakeInfo.MAKE_CIRCLE,
+                            userData: { drawType: "ballRed" }
+                        }));
+                        break;
+                    case 2:
+                        //add triangle
+                        createdItem = domain.create(new box2dp.MakeInfo({
+                            x: xto, y: 100, vertices: [{ x: -32, y: 26 }, { x: 32, y: 26 }, { x: 0, y: -26 }], restitution: 0.5,
+                            createType: box2dp.MakeInfo.MAKE_POLYGON, userData: { drawType: "triangle" }
+                        }));
+                        break;
+                }
+                itemList.push(createdItem);
+                addPos++;
+            }
+
+            //add item every 0.5 second
+            setInterval(function () { addItem(); }, 500);
+
+            //event update after every physic step, remove items that has Y value > 600
+            domain.addEvent(box2dp.Event.AFTER_STEP, function (event) {
+                var ilen = itemList.length;
+                for (var i = ilen - 1; i > -1; i--) {
+                    var loopItem = itemList[i];
+                    if (loopItem.iy > 600) {
+                        domain.removeItem(loopItem);
+                        itemList.splice(i, 1);
+                    }
+                }
+            });
+
+            //run the simulation , update physics every 50 milliseconds , update rendering every 25 milliseconds
+            domain.run(50, 25);
+
+        }
+
+    </script>
+
+</head>
+<body onload="init();">
+    <div class="divContent">
+        <h5>custom renderer</h5>
+        <div id="customScreen"></div>
+    </div>
+</body>
+</html>

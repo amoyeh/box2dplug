@@ -17,10 +17,10 @@
 
         function init() {
 
-            //create a domain object that contain physic world, with gravity {x:0, y:10},  world step time set to 0.1
+            //create a domain object that contain physic world, with gravity {x:0, y:10},  world step time set to 0.1 second
             var domain = new box2dp.Domain({ x: 0, y: 10 }, 0.1);
 
-            //add a pixi renderer in div id pixiScreen
+            //add a PixiRenderer in div id pixiScreen
             var pixiRenderer = new box2dp.PixiRenderer({
                 antialias: false, elementId: "pixiScreen", width: 900, height: 500, transparent: false, backgroundColor: 0xF5F5F5
             });
@@ -31,7 +31,7 @@
             //set pixiRenderer draw everything
             pixiRenderer.drawFlags = box2dp.BaseRenderer.DRAW_ALL;
 
-            //enable drag & drop on pixi testing environment
+            //enable drag & drop on Pixi.js testing environment
             var dragDropPixi = new box2dp.DragControl(pixiRenderer);
             dragDropPixi.createDragDrop();
 
@@ -61,7 +61,7 @@
                 x: 300, y: 100, radius: 15, restitution: 0.1, createType: box2dp.MakeInfo.MAKE_CIRCLE
             }));
 
-            //create a box2d static edge, provide local vertices coordinates
+            //create a box2d static edge, provide local vertices' coordinates
             var edgeInfo = new box2dp.MakeInfo({
                 x: 150, y: 300, vertices: [{ x: 0, y: 0 }, { x: 100, y: -20 }, { x: 200, y: 0 }], createType: box2dp.MakeInfo.MAKE_EDGE, isStatic: true
             });

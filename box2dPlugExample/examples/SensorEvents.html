@@ -1,0 +1,134 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <meta charset="utf-8" />
+    <script src="../../lib/box2d.min.js"></script>
+    <script src="../../lib/pixi.min.js"></script>
+    <script src="../../lib/box2dPlug.min.js"></script>
+    <style>
+        body, html {
+            padding: 0px;
+            margin: 0px;
+            font: 15px sans-serif;
+        }
+
+        #pixiScreen {
+            float: left;
+        }
+
+        #txtDiv {
+            margin: 10px 0px 0px 10px;
+            float: left;
+            padding: 20px;
+            border-radius: 4px;
+            border: 1px solid #CCC;
+            line-height: 30px;
+        }
+    </style>
+
+    <script>
+
+        var boxBeginContactCount = 0;
+        var boxEndContactCount = 0;
+        var sensorBeginContactCount = 0;
+        var sensorEndContactCount = 0;
+
+        function init() {
+
+            //create a domain object that contain physic world, with gravity {x:0, y:10},  world step time set to 0.1
+            var domain = new box2dp.Domain({ x: 0, y: 0 }, 0.1);
+            //add a PixiRenderer in div id pixiScreen
+            var pixiRenderer = new box2dp.PixiRenderer({
+                antialias: false, elementId: "pixiScreen", width: 600, height: 500, transparent: false, backgroundColor: 0xF5F5F5
+            });
+            //add pixiRenderer to the domain
+            domain.addRenderer(pixiRenderer);
+            //set pixiRenderer draw everything
+            pixiRenderer.drawFlags = box2dp.BaseRenderer.DRAW_ALL;
+            //enable drag & drop on Pixi.js testing environment
+            var dragDropPixi = new box2dp.DragControl(pixiRenderer);
+            dragDropPixi.createDragDrop();
+
+            //create surrounding walls
+            var wallInfo = new box2dp.MakeInfo({
+                x: 300, y: 15, w: 600, h: 30, createType: box2dp.MakeInfo.MAKE_BOX_CENTER, fixedRotation: true, isStatic: true, friction: 0
+            });
+            domain.create(wallInfo);
+            wallInfo.y = 485;
+            domain.create(wallInfo);
+            wallInfo.x = 15; wallInfo.y = 250; wallInfo.h = 500; wallInfo.w = 30;
+            domain.create(wallInfo);
+            wallInfo.x = 585;
+            domain.create(wallInfo);
+
+            //create a box item
+            var boxInfo = new box2dp.MakeInfo({ x: 100, y: 100, w: 30, h: 60, createType: box2dp.MakeInfo.MAKE_BOX_CENTER });
+            var boxItem = domain.create(boxInfo);
+
+            //apply force to the b2body directly, refer to the box2d documentations for these two functions
+            boxItem.b2body.ApplyLinearImpulse(new box2d.b2Vec2(5, 5), boxItem.b2body.GetWorldCenter());
+            boxItem.b2body.ApplyAngularImpulse(1);
+
+            /*
+            to trigger event when object collides, first set enableContactEvent to true on target ItemEntity class,
+            then add desired event callback on this ItemEntity.
+            the event class contains following info when in the callback
+                event.target = target that dispatch the event, this example is the boxItem
+                event.otherItem = the other ItemEntity class collided
+                event.contact = the box2d.b2Contact class that contains contact detail
+            */
+
+            //set box to listen contact events
+            boxItem.enableContactEvent = true;
+
+            //when contact begin at box2d world
+            boxItem.addEvent(box2dp.Event.BEGIN_CONTACT, function (event) {
+                boxBeginContactCount++;
+                updateTxt();
+            });
+            //when contact ends at box2d world
+            boxItem.addEvent(box2dp.Event.END_CONTACT, function (event) {
+                boxEndContactCount++;
+                updateTxt();
+            });
+
+
+            //A sensor is shape that fires event when other objects comes in contact.
+            //since other objects can still pass through sensor when collide, this makes it ideal for design such as dager zone.
+            var sensorInfo = new box2dp.MakeInfo({
+                x: 300, y: 300, w: 100, h: 100, createType: box2dp.MakeInfo.MAKE_BOX_CENTER, isSensor: true, isStatic: true
+            });
+
+            //create the sensor in domain and listen to its events
+            var sensorItem = domain.create(sensorInfo);
+            sensorItem.enableContactEvent = true;
+            sensorItem.addEvent(box2dp.Event.BEGIN_CONTACT, function (event) {
+                sensorBeginContactCount++;
+                updateTxt();
+            });
+            //when contact ends at box2d world
+            sensorItem.addEvent(box2dp.Event.END_CONTACT, function (event) {
+                sensorEndContactCount++;
+                updateTxt();
+            });
+
+            //run the simulation , update physics every 50 milliseconds , update rendering every 25 milliseconds
+            domain.run(50, 25);
+
+        }
+
+        function updateTxt() {
+            document.getElementById("txtDiv").innerHTML =
+                "boxBeginContactCount: " + boxBeginContactCount + "</br>boxEndContactCount: " + boxEndContactCount +
+                "</br>sensorBeginContactCount: " + sensorBeginContactCount + "</br>sensorEndContactCount" + sensorEndContactCount;
+        }
+
+    </script>
+
+</head>
+<body onload="init();">
+    <div id="pixiScreen"></div>
+    <div id="txtDiv"></div>
+</body>
+</html>

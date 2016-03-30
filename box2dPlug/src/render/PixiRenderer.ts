@@ -130,9 +130,6 @@
                         var toy: number = MakeInfo.mult30(cir.m_p.y);
                         gshape.drawCircle(tox, toy, radius);
                         gshape.endFill();
-                        //gshape.lineStyle(1, useColor, useAlpha);
-                        //gshape.moveTo(tox, toy);
-                        //gshape.lineTo(tox + radius, 0);
                         break;
 
                     case box2d.b2ShapeType.e_polygonShape:

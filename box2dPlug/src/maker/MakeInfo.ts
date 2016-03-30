@@ -41,7 +41,7 @@
         //===================================================================================
 
         public name: string;
-        public itemType: number;
+        //public itemType: number;
         public x: number = 0;
         public y: number = 0;
         public w: number = 0;
@@ -79,7 +79,7 @@
         public chainOverlap: number;
 
         constructor(setting: {
-            name?: string, itemType?: number, x?: number, y?: number, w?: number, h?: number, radius?: number, createType?: number, allowSleep?: boolean,
+            name?: string, x?: number, y?: number, w?: number, h?: number, radius?: number, createType?: number, allowSleep?: boolean,
             isStatic?: boolean, density?: number, friction?: number, restitution?: number, fixedRotation?: boolean, angle?: number,
             bullet?: boolean, vertices?: { x: number, y: number }[], loopEdge?: boolean, isSensor?: boolean, categoryBits?: number,
             maskBits?: number, makeInfos?: MakeInfo[], userData?: any, fixtureData?: any,

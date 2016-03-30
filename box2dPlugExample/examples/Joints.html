@@ -1,0 +1,336 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <meta charset="utf-8" />
+    <script src="../../lib/box2d.min.js"></script>
+    <script src="../../lib/pixi.min.js"></script>
+    <script src="../../lib/box2dPlug.min.js"></script>
+    <style>
+        body, html {
+            padding: 0px;
+            margin: 0px;
+        }
+    </style>
+
+    <script>
+
+        function init() {
+
+            //create a domain object that contain physic world, with gravity {x:0, y:10},  world step time set to 0.1
+            var domain = new box2dp.Domain({ x: 0, y: 10 }, 0.1);
+
+            //add a PixiRenderer in div id pixiScreen
+            var pixiRenderer = new box2dp.PixiRenderer({
+                antialias: false, elementId: "pixiScreen", width: 900, height: 500, transparent: false, backgroundColor: 0xF5F5F5
+            });
+
+            //add pixiRenderer to the domain
+            domain.addRenderer(pixiRenderer);
+
+            //set pixiRenderer draw everything
+            pixiRenderer.drawFlags = box2dp.BaseRenderer.DRAW_ALL;
+
+            //enable drag & drop on Pixi.js testing environment
+            var dragDropPixi = new box2dp.DragControl(pixiRenderer);
+            dragDropPixi.createDragDrop();
+
+
+            //make surrounding wall
+            var wallInfo = new box2dp.MakeInfo({
+                x: 450, y: 0, w: 1200, h: 60, createType: box2dp.MakeInfo.MAKE_BOX_CENTER, fixedRotation: true,
+                isStatic: true
+            });
+            domain.create(wallInfo);
+            wallInfo.y = 500;
+            domain.create(wallInfo);
+            wallInfo.x = 0; wallInfo.y = 250; wallInfo.w = 60; wallInfo.h = 800;
+            domain.create(wallInfo);
+            wallInfo.x = 900;
+            domain.create(wallInfo);
+
+
+            //Revolute Joint
+            //attaches two bodies at a common point (anchor) in the physical world. Once attached,
+            //rotation of these two bodies is allowed only around the pivot point.
+            //---------------------------------------------------------------------------------------------
+            function createRevoluteJoint() {
+                var revoCenterInfo = new box2dp.MakeInfo({ x: 120, y: 120, w: 9, h: 9, createType: box2dp.MakeInfo.MAKE_BOX_CENTER, isStatic: true });
+                var rvCenter = domain.create(revoCenterInfo);
+                var revoBarInfo = new box2dp.MakeInfo({ x: 120, y: 120, w: 90, h: 12, createType: box2dp.MakeInfo.MAKE_BOX_CENTER, isStatic: false });
+                var rvBar = domain.create(revoBarInfo);
+                var rjd = new box2d.b2RevoluteJointDef();
+                rjd.collideConnected = false;
+                rjd.maxMotorTorque = 2;
+                rjd.motorSpeed = 2;
+                rjd.enableMotor = true;
+                rjd.Initialize(rvCenter.b2body, rvBar.b2body, rvCenter.b2body.GetPosition());
+                domain.createJoint(rjd);
+            }
+
+            //Weld joint
+            //attaches two bodies at a specified anchor point in content space coordinates.
+            //---------------------------------------------------------------------------------------------
+            function createWeldJoint() {
+                var boxInfo = new box2dp.MakeInfo({ x: 100, y: 300, w: 30, h: 30, createType: box2dp.MakeInfo.MAKE_BOX_CENTER, isStatic: false });
+                var wbox = domain.create(boxInfo);
+                var cirInfo = new box2dp.MakeInfo({ x: 180, y: 300, radius: 15, createType: box2dp.MakeInfo.MAKE_CIRCLE, isStatic: false });
+                var wcircle = domain.create(cirInfo);
+                var wjd = new box2d.b2WeldJointDef();
+                wjd.frequencyHz = 1.0;
+                wjd.dampingRatio = 0.1;
+                wjd.Initialize(wbox.b2body, wcircle.b2body, wcircle.b2body.GetPosition());
+                domain.createJoint(wjd);
+            }
+
+            //Prismatic Joints
+            //joins two bodies along a single, restricted axis of motion.
+            //1. An engine piston where the piston “head” can move up and down vertically.
+            //2. An elevator platform that is restricted to movement along a vertical axis.
+            //---------------------------------------------------------------------------------------------
+            function createPrismaticJoint() {
+
+                //first Prismatic Joints
+                var boxInfo = new box2dp.MakeInfo({ x: 250, y: 120, w: 10, h: 10, createType: box2dp.MakeInfo.MAKE_BOX_CENTER, isStatic: true });
+                var pjbox1 = domain.create(boxInfo);
+                boxInfo.x = 270;
+                boxInfo.isStatic = false;
+                boxInfo.w = boxInfo.h = 20;
+                var pjbox2 = domain.create(boxInfo);
+
+                var pjd = new box2d.b2PrismaticJointDef();
+                var axis = new box2d.b2Vec2(1, 1);
+                axis.Normalize();
+                //first body, second body, center position (the anchor), the axis as direction move along
+                pjd.Initialize(pjbox1.b2body, pjbox2.b2body, pjbox2.b2body.GetPosition(), axis);
+                //limlit the low and high distance from the direction
+                pjd.lowerTranslation = -2;
+                pjd.upperTranslation = 2;
+                pjd.enableLimit = true;
+                domain.createJoint(pjd);
+
+                ////second Prismatic Joints has motor moving upward (negative y)
+                boxInfo = new box2dp.MakeInfo({ x: 370, y: 150, w: 10, h: 10, createType: box2dp.MakeInfo.MAKE_BOX_CENTER, isStatic: true });
+                var pjbox3 = domain.create(boxInfo);
+                boxInfo.isStatic = false;
+                boxInfo.w = boxInfo.h = 20;
+                var pjbox4 = domain.create(boxInfo);
+
+                pjd = new box2d.b2PrismaticJointDef();
+                var axis = new box2d.b2Vec2(0, 1);
+                axis.Normalize();
+
+                pjd.Initialize(pjbox3.b2body, pjbox4.b2body, pjbox4.b2body.GetPosition(), axis);
+                pjd.lowerTranslation = -2;
+                pjd.upperTranslation = 2;
+                pjd.enableLimit = true;
+                pjd.enableMotor = true;
+                pjd.motorSpeed = -10.0;
+                pjd.maxMotorForce = 10.0;
+                domain.createJoint(pjd);
+            }
+
+            //Pulley Joint
+            //---------------------------------------------------------------------------------------------
+            function createPulleyJoint() {
+                var cirInfo = new box2dp.MakeInfo({ x: 480, y: 100, radius: 5, createType: box2dp.MakeInfo.MAKE_CIRCLE, isStatic: true });
+                var pjSpot1 = domain.create(cirInfo);
+                cirInfo.x = 600;
+                var pjSpot2 = domain.create(cirInfo);
+
+                var boxInfo = new box2dp.MakeInfo({ x: 480, y: 200, w: 60, h: 20, createType: box2dp.MakeInfo.MAKE_BOX_CENTER, isStatic: false });
+                var pjBox1 = domain.create(boxInfo);
+                boxInfo.x = 600;
+                var pjBox2 = domain.create(boxInfo);
+
+                var pud = new box2d.b2PulleyJointDef();
+                //(first body, 2nd body, spot position1, spot position2, anchor1 , anchor2, proportion ratio)
+                pud.Initialize(
+                    pjBox1.b2body, pjBox2.b2body, pjSpot1.b2body.GetPosition(), pjSpot2.b2body.GetPosition(),
+                    pjBox1.b2body.GetPosition(), pjBox2.b2body.GetPosition(), 1);
+                domain.createJoint(pud);
+            }
+            //---------------------------------------------------------------------------------------------
+
+            //Friction Join
+            //Used to simulate top- down friction between two objects.This can be useful for simulating both translational
+            //(directional) friction and angular (rotational) friction between two joined objects.
+            //-----------------------------------------------------------------------------------------
+            function createFrictionJoint() {
+                var boxInfo = new box2dp.MakeInfo({ x: 250, y: 300, w: 20, h: 20, createType: box2dp.MakeInfo.MAKE_BOX_CENTER, isStatic: false });
+                var fjbox1 = domain.create(boxInfo);
+                boxInfo.x = 350;
+                var fjbox2 = domain.create(boxInfo);
+
+                var fj = new box2d.b2FrictionJointDef();
+                fj.localAnchorA.SetZero();
+                fj.localAnchorB.SetZero();
+                fj.bodyA = fjbox1.b2body;
+                fj.bodyB = fjbox2.b2body;
+                fj.collideConnected = true;
+                fj.maxForce = 10;
+                fj.maxTorque = 10;
+                domain.createJoint(fj);
+            }
+            //---------------------------------------------------------------------------------------------
+
+
+            //Area Join (Non-built-in joint in original box2d.)
+            //connects a group a bodies together so they maintain a constant area within them.
+            //----------------------------------------------------------------------------------------------
+            function createAreaJoint() {
+                var ajd = new box2d.b2AreaJointDef();
+                ajd.world = domain.world;
+                //The mass-spring-damper frequency in Hertz. A value of 0 disables softness.
+                ajd.frquencyHz = 1;
+                //The damping ratio. 0 = no damping, 1 = critical damping.
+                ajd.dampingRatio = 1;
+                //add a list of balls in circular form to the area
+                var addAmt = 15;
+                var oneAngle = Math.PI / 180 * (360 / addAmt);
+                var currentAngle = 0;
+                for (var k = 0; k < addAmt; k++) {
+                    var tox = 500 + Math.cos(currentAngle) * 50;
+                    var toy = 350 + Math.sin(currentAngle) * 50;
+                    currentAngle += oneAngle;
+                    var circleInfo = new box2dp.MakeInfo({
+                        x: tox, y: toy, radius: 8, createType: box2dp.MakeInfo.MAKE_CIRCLE, fixedRotation: true
+                    });
+                    ajd.AddBody(domain.create(circleInfo).b2body);
+                }
+                domain.createJoint(ajd);
+            }
+            //---------------------------------------------------------------------------------------------
+
+
+            //Wheel Joint
+            //A wheel joint is similar to a Prismatic joint, except that the attached body can rotate freely like a wheel 
+            //it also has motor speed value to make itself rotate, ideal for creating car wheels.
+            //---------------------------------------------------------------------------------------------
+            function createWheelJoint() {
+                var cirInfo = new box2dp.MakeInfo({ x: 620, y: 310, radius: 10, createType: box2dp.MakeInfo.MAKE_CIRCLE, isStatic: false, fixedRotation: false });
+                var wheel1 = domain.create(cirInfo);
+                cirInfo.x = 680;
+                var wheel2 = domain.create(cirInfo);
+                var boxInfo = new box2dp.MakeInfo({ x: 650, y: 280, w: 100, h: 25, createType: box2dp.MakeInfo.MAKE_BOX_CENTER, isStatic: false, fixedRotation: false });
+                var carBox = domain.create(boxInfo);
+
+                var whjd = new box2d.b2WheelJointDef();
+                whjd.frequencyHz = 5.0;
+                whjd.dampingRatio = 1.0;
+                whjd.motorSpeed = 3.0;
+                whjd.maxMotorTorque = 20.0;
+                whjd.enableMotor = true;
+                //axis is either 0,1 or 0,-1. (x or y direction)
+                whjd.Initialize(carBox.b2body, wheel1.b2body, wheel1.b2body.GetPosition(), new box2d.b2Vec2(0, 1));
+                domain.createJoint(whjd);
+
+                //front wheel joint
+                whjd.enableMotor = false;
+                whjd.Initialize(carBox.b2body, wheel2.b2body, wheel2.b2body.GetPosition(), new box2d.b2Vec2(0, 1));
+                domain.createJoint(whjd);
+            }
+            //---------------------------------------------------------------------------------------------
+
+
+            //Gear Joint
+            //gear joint make two objects behaves like connected gears. these two objects must have
+            //revoluteJoint or PrismaticJoint created first.
+            //--------------------------------------------------------------------------------------------
+            function createGearJoint() {
+                //first gear circle and center spot
+                var cirInfo = new box2dp.MakeInfo({ x: 700, y: 150, radius: 30, createType: box2dp.MakeInfo.MAKE_CIRCLE, isStatic: false });
+                var spotInfo = new box2dp.MakeInfo({ x: 700, y: 150, radius: 5, createType: box2dp.MakeInfo.MAKE_CIRCLE, isStatic: true });
+                var gearCir1 = domain.create(cirInfo);
+                var gearSpot1 = domain.create(spotInfo);
+
+                //second gear circle and center spot
+                spotInfo.x = cirInfo.x = 750;
+                cirInfo.radius = 20;
+                var gearCir2 = domain.create(cirInfo);
+                var gearSpot2 = domain.create(spotInfo);
+
+                //revoluteJoints on both gear
+                var gearRD = new box2d.b2RevoluteJointDef();
+                gearRD.Initialize(gearSpot1.b2body, gearCir1.b2body, gearCir1.b2body.GetPosition());
+                var revolute1 = domain.createJoint(gearRD);
+
+                gearRD.Initialize(gearSpot2.b2body, gearCir2.b2body, gearCir2.b2body.GetPosition());
+                var revolute2 = domain.createJoint(gearRD);
+   
+                // gear joint on gearCir1 to gearCir2 (take revolute Joints to make rotation react mutually)
+                var gearjd = new box2d.b2GearJointDef();
+                gearjd.bodyA = gearCir1.b2body;
+                gearjd.bodyB = gearCir2.b2body;
+                gearjd.joint1 = revolute1;
+                gearjd.joint2 = revolute2;
+                gearjd.ratio = 20 / 30;
+                domain.createJoint(gearjd);
+
+
+                //3rd gear using PrismaticJoint
+                var boxInfo = new box2dp.MakeInfo({ x: 780, y: 150, w: 15, h: 30, createType: box2dp.MakeInfo.MAKE_BOX_CENTER, isStatic: false });
+                var spotInfo = new box2dp.MakeInfo({ x: 780, y: 150, radius: 5, createType: box2dp.MakeInfo.MAKE_CIRCLE, isStatic: true });
+                var gearBar = domain.create(boxInfo);
+                var spotBar = domain.create(spotInfo);
+                var pjd = new box2d.b2PrismaticJointDef();
+                pjd.Initialize(spotBar.b2body, gearBar.b2body, gearBar.b2body.GetPosition(), new box2d.b2Vec2(0, 1));
+                pjd.lowerTranslation = -2;
+                pjd.upperTranslation = 2;
+                pjd.enableLimit = true;
+                var barJoint = domain.createJoint(pjd);
+
+                //set up 3rd gear to react to PrismaticJoint
+                gearjd = new box2d.b2GearJointDef();
+                gearjd.bodyA = gearCir2.b2body;
+                gearjd.bodyB = gearBar.b2body;
+                gearjd.joint1 = revolute2;
+                gearjd.joint2 = barJoint;
+                gearjd.ratio = 1;
+                domain.createJoint(gearjd);
+            }
+            //--------------------------------------------------------------------------------------------
+
+
+            //Motor Joint (Non-built-in joint in original box2d.)
+            //object location is bound to the giving joint location, it pulls the attached    object back elastically on when external force occur.
+            //--------------------------------------------------------------------------------------------
+            function createMotorJoint() {
+                var boxInfo = new box2dp.MakeInfo({ x: 780, y: 380, w: 30, h: 30, createType: box2dp.MakeInfo.MAKE_BOX_CENTER, isStatic: false });
+                var motorBox = domain.create(boxInfo);
+                boxInfo.isStatic = true;
+                boxInfo.w = boxInfo.h = 10;
+                var motorCenter = domain.create(boxInfo);
+
+                var motorJd = new box2d.b2MotorJointDef();
+                motorJd.Initialize(motorBox.b2body, motorCenter.b2body);
+                motorJd.collideConnected = false;
+                //force on the string, the pull force on position, higher stronger, also affteced on object's density
+                motorJd.maxForce = 20;
+                //force on the string, the rotation force, lower it to make it spin more
+                motorJd.maxTorque = 10;
+                domain.createJoint(motorJd);
+            }
+
+            createRevoluteJoint();
+            createWeldJoint();
+            createPrismaticJoint();
+            createPulleyJoint();
+            createFrictionJoint();
+            createAreaJoint();
+            createWheelJoint();
+            createGearJoint();
+            createMotorJoint();
+
+            //run the simulation , update physics every 50 milliseconds , update rendering every 25 milliseconds
+            domain.run(50, 25);
+
+        }
+
+    </script>
+
+</head>
+<body onload="init();">
+    <div id="pixiScreen"></div>
+</body>
+</html>

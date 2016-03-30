@@ -202,7 +202,7 @@
 
         //create the itemEntity and add to domain, fire render event
         public createItemEntity(makeInfo: MakeInfo, name: string): ItemEntity {
-            var newItem = new ItemEntity(this.create(makeInfo), makeInfo.itemType, name);
+            var newItem = new ItemEntity(this.create(makeInfo), name);
             this.domain.items.push(newItem);
             for (var p: number = 0; p < this.domain.rlen; p++) this.domain.renderers[p].onItemCreate(newItem);
             this.domain.fireEvent(new Event(Event.ITEM_CREATED, this.domain, newItem));

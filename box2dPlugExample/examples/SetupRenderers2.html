@@ -1,0 +1,153 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <meta charset="utf-8" />
+    <script src="../../lib/box2d.min.js"></script>
+    <script src="../../lib/pixi.min.js"></script>
+    <script src="../../lib/three.min.js"></script>
+    <script src="../../lib/box2dPlug.min.js"></script>
+    <style>
+        body, html {
+            padding: 5px;
+            margin: 0px;
+            font: 18px sans-serif;
+        }
+
+        h5 {
+            margin: 10px;
+            padding: 0px;
+        }
+
+        .divContent {
+            float: left;
+            width: 450px;
+            height: auto;
+            margin-right: 10px;
+        }
+
+        .divControls {
+            float: left;
+            font-size: 15px;
+        }
+    </style>
+
+    <script>
+
+        //this function is for extending box2dp's Classes in javascript.
+        //If you use Typescript, you can simply extend target class instead.
+        var __extends = (this && this.__extends) || function (d, b) {
+            for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+            function __() { this.constructor = d; }
+            d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+        };
+
+        //box2dp.Color Class is used to control what colors to use when drawing shapes on screen.
+        //this example extends box2dp.Color class to customize these values.
+        var MyCustomColor = (function (_super) {
+            __extends(MyCustomColor, _super);
+            function MyCustomColor() {
+                _super.apply(this, arguments);
+                //Color Class supported color settings
+                this.ITEM_STATIC = 0xCC5533;
+                this.ITEM_DYNAMIC = 0x55CC33;
+                this.ITEM_ALPHA = 0.8;
+                this.LINE_CENTER_X = 0x993333;
+                this.LINE_CENTER_Y = 0x339933;
+                this.LINE_BOUNDARY = 0x6666AA;
+                this.SENSOR = 0xFFDD88;
+                this.SENSOR_ALPHA = 0.3;
+                this.LINE_JOINT = 0xCC3300;
+            }
+            return MyCustomColor;
+        })(box2dp.Color);
+
+
+
+        function init() {
+
+            //create a domain object that contain physic world, with gravity {x:0, y:10},  world step time set to 0.1
+            var domain = new box2dp.Domain({ x: 0, y: 10 }, 0.1);
+
+            //add a PixiRenderer in div id "pixiScreen"
+            var pixiRenderer = new box2dp.PixiRenderer({
+                antialias: false, elementId: "pixiScreen", width: 450, height: 500,
+                transparent: false, backgroundColor: 0xF5F5F5
+            });
+            //add pixiRenderer to the domain
+            domain.addRenderer(pixiRenderer);
+            //set pixiRenderer draw everything
+            pixiRenderer.drawFlags = box2dp.BaseRenderer.DRAW_ALL;
+            //enable drag & drop on Pixi.js testing environment
+            var dragDropPixi = new box2dp.DragControl(pixiRenderer);
+            dragDropPixi.createDragDrop();
+
+            //add a three.js renderer in div id "threeScreen"
+            //using colorClass: new MyCustomColor() to customize drawing colors
+            var threeRenderer = new box2dp.ThreeRenderer({
+                antialias: false, elementId: "threeScreen", width: 450, height: 500, invertY: true,
+                transparent: false, backgroundColor: 0xF5F5F5, colorClass: new MyCustomColor()
+            });
+            //add threeRenderer to the domain
+            domain.addRenderer(threeRenderer);
+            //set threeRenderer draw everything
+            threeRenderer.drawFlags = box2dp.BaseRenderer.DRAW_ALL;
+            //enable drag & drop on three.js testing environment
+            var tcThree = new box2dp.DragControl(threeRenderer);
+            tcThree.createDragDrop();
+
+
+            //create surrounding wall
+            var wallInfo = new box2dp.MakeInfo({
+                x: 225, y: 15, w: 450, h: 30, createType: box2dp.MakeInfo.MAKE_BOX_CENTER, fixedRotation: true,
+                isStatic: true, friction: 0
+            });
+            domain.create(wallInfo);
+            wallInfo.y = 485;
+            domain.create(wallInfo);
+            wallInfo = new box2dp.MakeInfo({
+                x: 15, y: 250, w: 30, h: 500, createType: box2dp.MakeInfo.MAKE_BOX_CENTER, fixedRotation: true,
+                isStatic: true, friction: 0
+            });
+            domain.create(wallInfo);
+            wallInfo.x = 435;
+            domain.create(wallInfo);
+
+
+            //create a box
+            var boxInfo = new box2dp.MakeInfo({
+                x: 100, y: 100, w: 60, h: 60, angle: 0.5236, restitution: 0.1, createType: box2dp.MakeInfo.MAKE_BOX_CENTER
+            });
+            domain.create(boxInfo);
+
+            //create a circle
+            domain.create(new box2dp.MakeInfo({
+                x: 200, y: 100, radius: 30, restitution: 0.1, createType: box2dp.MakeInfo.MAKE_CIRCLE
+            }));
+
+            //create a polygon
+            domain.create(new box2dp.MakeInfo({
+                x: 300, y: 100, restitution: 0.1, createType: box2dp.MakeInfo.MAKE_POLYGON,
+                vertices: [{ x: 0, y: 0 }, { x: 45, y: 50 }, { x: -45, y: 50 }]
+            }));
+
+            //run the simulation , update physics every 50 milliseconds , update rendering every 25 milliseconds
+            domain.run(50, 25);
+
+        }
+
+    </script>
+
+</head>
+<body onload="init();">
+    <div class="divContent">
+        <h5>pixi.js renderer</h5>
+        <div id="pixiScreen"></div>
+    </div>
+    <div class="divContent">
+        <h5>three.js renderer</h5>
+        <div id="threeScreen"></div>
+    </div>
+</body>
+</html>
+

@@ -23,14 +23,25 @@
     <Service Include="{4A0DDDB5-7A95-4FBF-97CC-616D07737A77}" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="examples\CollisionFilter.html" />
+    <Content Include="examples\CustomRenderer.html" />
+    <Content Include="examples\Joints.html" />
+    <Content Include="examples\liquidFun.html" />
+    <Content Include="examples\liquidFun2.html" />
+    <Content Include="examples\liquidFun3.html" />
+    <Content Include="examples\liquidGroup.html" />
+    <Content Include="examples\liquidGroup2.html" />
     <Content Include="examples\ObjectCreation.html" />
     <Content Include="examples\ObjectCreation2.html" />
     <Content Include="examples\ObjectCreation3.html" />
+    <Content Include="examples\SensorEvents.html" />
+    <Content Include="examples\SetupRenderers.html" />
+    <Content Include="examples\SetupRenderers2.html" />
+    <Content Include="examples\SetupRenderers3.html" />
+    <Content Include="examples\todo.txt" />
     <Content Include="lib\box2dPlug.min.js" />
     <Content Include="testFeatures\basic\Joints.html" />
     <Content Include="testFeatures\basic\ObjectCreation.html" />
-    <Content Include="testFeatures\%40old\JointBasic.html" />
-    <Content Include="testFeatures\%40old\useCdn.html" />
     <Content Include="testFeatures\basic\RemoveItems.html" />
     <Content Include="testFeatures\basic\RemoveJoints.html" />
     <Content Include="testFeatures\basic\Rope.html" />
@@ -46,11 +57,6 @@
     <Content Include="testFeatures\test\testCrank.html" />
     <Content Include="testFeatures\todo.txt" />
     <Content Include="website\normalize.css" />
-    <Content Include="testFeatures\%40old\basicCreate.html" />
-    <Content Include="testFeatures\%40old\addRemove.html" />
-    <Content Include="testFeatures\%40old\CustomRender.html" />
-    <Content Include="testFeatures\%40old\QuadTree.html" />
-    <Content Include="testFeatures\%40old\Sensor.html" />
     <Content Include="testFeatures\styles.css" />
     <Content Include="lib\box2d.min.js" />
     <Content Include="lib\box2dPlug.js" />
@@ -83,8 +89,6 @@
     <TypeScriptCompile Include="dts\three.d.ts" />
     <TypeScriptCompile Include="testFeatures\test\testCrank.ts" />
     <TypeScriptCompile Include="website\src\CustomRenderer.ts" />
-    <TypeScriptCompile Include="testFeatures\%40old\addRemove.ts" />
-    <TypeScriptCompile Include="testFeatures\%40old\basicCreate.ts" />
     <TypeScriptCompile Include="testFeatures\basic\Joints.ts" />
     <TypeScriptCompile Include="testFeatures\basic\ObjectCreation.ts" />
     <TypeScriptCompile Include="testFeatures\basic\RemoveItems.ts" />
@@ -93,11 +97,6 @@
     <TypeScriptCompile Include="testFeatures\collision\CollisionEvent.ts" />
     <TypeScriptCompile Include="testFeatures\collision\CollisionFilter.ts" />
     <TypeScriptCompile Include="testFeatures\common.ts" />
-    <TypeScriptCompile Include="testFeatures\%40old\CustomRenderer.ts" />
-    <TypeScriptCompile Include="testFeatures\%40old\CustomRenderPage.ts" />
-    <TypeScriptCompile Include="testFeatures\%40old\JointBasic.ts" />
-    <TypeScriptCompile Include="testFeatures\%40old\QuadTreePage.ts" />
-    <TypeScriptCompile Include="testFeatures\%40old\SensorPage.ts" />
     <TypeScriptCompile Include="website\src\CustomColor.ts" />
     <TypeScriptCompile Include="testFeatures\liquid\liquidBasic.ts" />
     <TypeScriptCompile Include="testFeatures\liquid\liquidContact.ts" />

@@ -1,0 +1,88 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <meta charset="utf-8" />
+    <script src="../../lib/box2d.min.js"></script>
+    <script src="../../lib/pixi.min.js"></script>
+    <script src="../../lib/box2dPlug.js"></script>
+    <style>
+        body, html {
+            padding: 0px;
+            margin: 0px;
+        }
+    </style>
+
+    <script>
+
+        function init() {
+
+            //create a domain that contain the physic world
+            var domain = new box2dp.Domain({ x: 0, y: 10 }, 0.1);
+
+            var pixiRenderer = new box2dp.PixiRenderer({
+                antialias: true, elementId: "pixiScreen", width: 900, height: 500, backgroundColor: 0x333333, transparent: false
+            });
+            domain.addRenderer(pixiRenderer);
+            pixiRenderer.drawFlags = box2dp.BaseRenderer.DRAW_SHAPE | box2dp.BaseRenderer.DRAW_CENTER | box2dp.BaseRenderer.DRAW_BOUNDARY;
+            var tcPixi = new box2dp.DragControl(pixiRenderer);
+            tcPixi.createDragDrop();
+
+            //create static surrounding wall
+            var wallInfo = new box2dp.MakeInfo({
+                x: 450, y: 15, w: 900, h: 30, createType: box2dp.MakeInfo.MAKE_BOX_CENTER, fixedRotation: true, isStatic: true, friction: 0
+            });
+            domain.create(wallInfo);
+            wallInfo.y = 485;
+            wallInfo.h = 30;
+            domain.create(wallInfo);
+            wallInfo.x = 15; wallInfo.y = 250; wallInfo.w = 30; wallInfo.h = 500;
+            domain.create(wallInfo);
+            wallInfo.x = 885;
+            domain.create(wallInfo);
+
+            var psd = new box2d.b2ParticleSystemDef();
+            psd.radius = 0.4;
+            psd.density = 1.2;
+            psd.gravityScale = 1;
+    
+            //create the system by passing definition and display setting
+            var liquidSys = domain.createParticleSystem(psd, box2dp.MakeInfo.MAKE_CIRCLE, 0x225588, 0.75);
+            var cirShape = new box2d.b2CircleShape();
+            cirShape.m_radius = 1;
+            var gd = new box2d.b2ParticleGroupDef();
+            gd.groupFlags = box2d.b2ParticleGroupFlag.b2_solidParticleGroup;
+            gd.flags = box2d.b2ParticleFlag.b2_elasticParticle;
+            gd.shape = cirShape;
+
+            var count = 0;
+            function createGroup() {
+                var xto = 3.5 + count % 6 * 4.5;
+                gd.position.Set(xto, 5);
+                //add some velocity for effect
+                gd.linearVelocity = new box2d.b2Vec2(box2dp.MakeInfo.random(-2, 2, false), box2dp.MakeInfo.random(-3, 3, false));
+                domain.createParticleGroup(liquidSys, gd);
+                count++;
+            }
+
+            setInterval(function () {
+                createGroup();
+                if (domain.particleGroups.length > 20) {
+                    //destroy the first (oldest) particlegroup stored in domain.particleGroups and remove it from this array.
+                    domain.destroyParticleGroup(liquidSys, domain.particleGroups[0]);
+                }
+            }, 200);
+
+            domain.run(50, 25);
+
+        }
+
+    </script>
+
+</head>
+<body onload="init();">
+    <div id="pixiScreen"></div>
+</body>
+</html>
+
+

@@ -28,9 +28,8 @@
 
         public selector: QuadSelector;
 
-        constructor(b2body: box2d.b2Body, type: number, name?: string) {
+        constructor(b2body: box2d.b2Body, name?: string) {
             super(name);
-            this.type = type;
             this.b2body = b2body;
             this.b2body.item = this;
             this.dynamic = (this.b2body.GetType() === box2d.b2BodyType.b2_dynamicBody);

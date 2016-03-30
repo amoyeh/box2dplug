@@ -268,19 +268,17 @@
             var ctx: number = MakeInfo.mult30(it.b2body.GetLocalCenter().x);
             var cty: number = MakeInfo.mult30(it.b2body.GetLocalCenter().y);
             
-            //X being R color
             var geometry = new THREE.Geometry();
-            geometry.vertices.push(new THREE.Vector3(ctx, cty, 0), new THREE.Vector3(ctx + 8, cty, 0));
+            geometry.vertices.push(new THREE.Vector3(ctx, cty, 1), new THREE.Vector3(ctx + 8, cty, 0));
             var line = new THREE.Line(geometry, this.colorClass.getLineCenterXMat());
             line.name = "clx";
-            display.add(line);
+            shape3d.add(line);
 
-            //Y being G color
             geometry = new THREE.Geometry();
-            geometry.vertices.push(new THREE.Vector3(ctx, cty, 0), new THREE.Vector3(ctx, cty + 8, 0));
+            geometry.vertices.push(new THREE.Vector3(ctx, cty, 1), new THREE.Vector3(ctx, cty + 8, 0));
             var line = new THREE.Line(geometry, this.colorClass.getLineCenterYMat());
             line.name = "cly";
-            display.add(line);
+            shape3d.add(line);
 
             //draw local boundary
             //------------------------------------------------

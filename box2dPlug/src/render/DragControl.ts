@@ -21,10 +21,10 @@
         }
 
         public createDragDrop(): void {
-            if (this.renderer.constructor === box2dp.PixiRenderer) {
+            if (this.renderer instanceof box2dp.PixiRenderer) {
                 this.createPixiDragDrop();
             }
-            if (this.renderer.constructor === box2dp.ThreeRenderer) {
+            if (this.renderer instanceof box2dp.ThreeRenderer) {
                 this.createThreeDragDrop();
             }
         }

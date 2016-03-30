@@ -1,0 +1,98 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <meta charset="utf-8" />
+    <script src="../../lib/box2d.min.js"></script>
+    <script src="../../lib/pixi.min.js"></script>
+    <script src="../../lib/box2dPlug.js"></script>
+    <style>
+        body, html {
+            padding: 0px;
+            margin: 0px;
+        }
+    </style>
+
+    <script>
+
+        function init() {
+
+            //create a domain object that contain physic world, with gravity {x:0, y:10},  world step time set to 0.1
+            var domain = new box2dp.Domain({ x: 0, y: 10 }, 0.1);
+
+            //add a PixiRenderer in div id pixiScreen
+            var pixiRenderer = new box2dp.PixiRenderer({
+                antialias: false, elementId: "pixiScreen", width: 900, height: 500, transparent: false, backgroundColor: 0xF5F5F5
+            });
+            domain.addRenderer(pixiRenderer);
+            pixiRenderer.drawFlags = box2dp.BaseRenderer.DRAW_ALL;
+            var dragDropPixi = new box2dp.DragControl(pixiRenderer);
+            dragDropPixi.createDragDrop();
+
+            //create cup
+            var wallInfo = new box2dp.MakeInfo({
+                x: 450, y: 450, w: 300, h: 30, createType: box2dp.MakeInfo.MAKE_BOX_CENTER, fixedRotation: true, isStatic: true, friction: 0
+            });
+            domain.create(wallInfo);
+            var ledge = new box2dp.MakeInfo({
+                x: 315, y: 435, w: 30, h: 60, createType: box2dp.MakeInfo.MAKE_BOX_CENTER, fixedRotation: true, isStatic: true, friction: 0
+            });
+            domain.create(ledge);
+            var redge = new box2dp.MakeInfo({
+                x: 585, y: 435, w: 30, h: 60, createType: box2dp.MakeInfo.MAKE_BOX_CENTER, fixedRotation: true, isStatic: true, friction: 0
+            });
+            domain.create(redge);
+
+
+            //liquid emitter example
+            //===========================================================================
+            //create particle system , first create the definition file
+            var psd = new box2d.b2ParticleSystemDef();
+            psd.density = 1;
+            psd.gravityScale = 1;
+            psd.maxCount = 1000;
+            psd.radius = 0.2;
+            //create the system by passing definition and display setting
+            var liquidSys = domain.createParticleSystem(psd, box2dp.MakeInfo.MAKE_CIRCLE, 0x225588, 0.2);
+
+
+            var particleDef = new box2d.b2ParticleDef();
+            particleDef.flags = box2d.b2ParticleFlag.b2_powderParticle;
+
+            var setting = { x: 450, y: 100, startAngle: 85, angleRange: 10, startVelocityLen: 1 };
+
+            function emit() {
+
+                //start random position from setting x y
+                var tox = setting.x + box2dp.MakeInfo.random(-9, 9);
+                var toy = setting.y + box2dp.MakeInfo.random(0, 15);
+                particleDef.position.Set(box2dp.MakeInfo.div30(tox), box2dp.MakeInfo.div30(toy));
+        
+                //angle from 85 ~ 95
+                var randomAng = 0.01745 * (Math.random() * setting.angleRange + setting.startAngle);
+                var force = new box2d.b2Vec2(setting.startVelocityLen, 0);
+                force.SelfRotateAngle(randomAng);
+                particleDef.velocity.Set(box2dp.MakeInfo.round(force.x), box2dp.MakeInfo.round(force.y));
+                var ip = domain.createParticle(liquidSys, particleDef);
+
+            }
+
+
+            //emit 2 particles every 50 milliseconds
+            setInterval(function () {
+                emit();
+                emit();
+            }, 50);
+            domain.run(50, 20);
+
+        }
+
+    </script>
+
+</head>
+<body onload="init();">
+    <div id="pixiScreen"></div>
+</body>
+</html>
+
+

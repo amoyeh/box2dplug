@@ -1,0 +1,100 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <meta charset="utf-8" />
+    <script src="../../lib/box2d.min.js"></script>
+    <script src="../../lib/pixi.min.js"></script>
+    <script src="../../lib/box2dPlug.js"></script>
+    <style>
+        body, html {
+            padding: 0px;
+            margin: 0px;
+        }
+    </style>
+
+    <script>
+
+        function init() {
+
+            //create a domain object that contain physic world, with gravity {x:0, y:10},  world step time set to 0.1
+            var domain = new box2dp.Domain({ x: 0, y: 10 }, 0.1);
+
+            //add a PixiRenderer in div id pixiScreen
+            var pixiRenderer = new box2dp.PixiRenderer({
+                antialias: false, elementId: "pixiScreen", width: 900, height: 500, transparent: false, backgroundColor: 0xF5F5F5
+            });
+            domain.addRenderer(pixiRenderer);
+            pixiRenderer.drawFlags = box2dp.BaseRenderer.DRAW_ALL;
+            var dragDropPixi = new box2dp.DragControl(pixiRenderer);
+            dragDropPixi.createDragDrop();
+
+            //make surrounding wall
+            var wallInfo = new box2dp.MakeInfo({
+                x: 450, y: 0, w: 1200, h: 60, createType: box2dp.MakeInfo.MAKE_BOX_CENTER, fixedRotation: true,
+                isStatic: true
+            });
+            domain.create(wallInfo);
+            wallInfo.y = 500;
+            domain.create(wallInfo);
+            wallInfo.x = 0; wallInfo.y = 250; wallInfo.w = 60; wallInfo.h = 800;
+            domain.create(wallInfo);
+            wallInfo.x = 900;
+            domain.create(wallInfo);
+
+
+            //liquid simulation
+            //===========================================================================
+            //create particle system , first create the definition file
+            var psd = new box2d.b2ParticleSystemDef();
+            psd.density = 1;
+            psd.gravityScale = 1;
+            psd.maxCount = 1000;
+            psd.radius = 0.5;
+            //create the system by passing definition and display setting
+            var liquidSys = domain.createParticleSystem(psd, box2dp.MakeInfo.MAKE_BOX_CENTER, 0x225588, 0.5);
+
+    
+            //create a single particle, by using particle definition
+            var pdef = new box2d.b2ParticleDef();
+            pdef.flags = box2d.b2ParticleFlag.b2_powderParticle;
+            pdef.position.Set(5, 5);
+            domain.createParticle(liquidSys, pdef);
+
+            //create several particles by reusing and changing the b2ParticleDef position 
+            pdef.position.Set(7, 5);
+            domain.createParticle(liquidSys, pdef);
+            pdef.position.Set(9, 5);
+            domain.createParticle(liquidSys, pdef);
+            pdef.position.Set(11, 5);
+            //create particle by using unique color and alpha
+            domain.createParticle(liquidSys, pdef, { color: 0x885522, alpha: 0.6 });
+            pdef.position.Set(13, 5);
+            domain.createParticle(liquidSys, pdef);
+
+            //destroy particles by index
+            liquidSys.DestroyParticle(1, null);
+
+            //create particles by defining w (amount of columns) and h (amount of rows), use the same particle definition
+            pdef.position.Set(15, 5);
+            domain.fillParticles(liquidSys, pdef, 3, 3);
+
+            //create other set by changing the position column size
+            pdef.position.Set(20, 5);
+            domain.fillParticles(liquidSys, pdef, 5, 3);
+            //===========================================================================
+
+            //run the simulation , update physics every 50 milliseconds , update rendering every 25 milliseconds
+            domain.run(50, 25);
+
+        }
+
+    </script>
+
+</head>
+<body onload="init();">
+    <div id="pixiScreen"></div>
+</body>
+</html>
+
+

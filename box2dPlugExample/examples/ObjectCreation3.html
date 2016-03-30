@@ -28,24 +28,23 @@
 
             //create various MakeInfo that creates different types of object
             var boxInfo = new box2dp.MakeInfo({
-                w: 30, h: 30, createType: box2dp.MakeInfo.MAKE_BOX_CENTER, itemType: box2dp.ItemBase.SHAPE
+                w: 30, h: 30, createType: box2dp.MakeInfo.MAKE_BOX_CENTER
             });
 
             //circle
             var circleInfo = new box2dp.MakeInfo({
-                radius: 20, createType: box2dp.MakeInfo.MAKE_CIRCLE, itemType: box2dp.ItemBase.SHAPE
+                radius: 20, createType: box2dp.MakeInfo.MAKE_CIRCLE
             });
 
             //edge object
             var edgeInfo = new box2dp.MakeInfo({
-                vertices: [{ x: 0, y: 0 }, { x: 30, y: 5 }, { x: 30, y: 25 }, { x: 5, y: 30 }, { x: 0, y: 0 }], createType: box2dp.MakeInfo.MAKE_EDGE,
-                itemType: box2dp.ItemBase.SHAPE
+                vertices: [{ x: 0, y: 0 }, { x: 30, y: 5 }, { x: 30, y: 25 }, { x: 5, y: 30 }, { x: 0, y: 0 }], createType: box2dp.MakeInfo.MAKE_EDGE
             });
 
             //polygon shape
             var polygonInfo = new box2dp.MakeInfo({
                 vertices: [{ x: 0, y: 0 }, { x: 35, y: 5 }, { x: 30, y: 25 }, { x: -5, y: 30 }, { x: 0, y: 0 }],
-                createType: box2dp.MakeInfo.MAKE_POLYGON, itemType: box2dp.ItemBase.SHAPE
+                createType: box2dp.MakeInfo.MAKE_POLYGON
             });
 
             //compound shape that combines different shapes
@@ -65,7 +64,6 @@
 
             //store this makeInfo in array, to use on object creation loop
             var infoList = [boxInfo, circleInfo, edgeInfo, polygonInfo, compoundInfo, sensorInfo];
-
 
             //store all the added class instace
             var addedItem = [];

@@ -1,0 +1,134 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <meta charset="utf-8" />
+    <script src="../../lib/box2d.min.js"></script>
+    <script src="../../lib/pixi.min.js"></script>
+    <script src="../../lib/box2dPlug.js"></script>
+    <style>
+        body, html {
+            padding: 5px;
+            margin: 0px;
+            background: #333333;
+            font: 15px sans-serif;
+        }
+
+        #txtDiv {
+            position: absolute;
+            left: 20px;
+            top: 20px;
+            padding: 20px;
+            border-radius: 4px;
+            border: 1px solid #CCC;
+            line-height: 20px;
+            width: 880px;
+            box-sizing: border-box;
+        }
+    </style>
+
+    <script>
+
+        var fixtureContactCount = 0;
+        var particleContactCount = 0;
+
+        function init() {
+
+
+
+            //create a domain that contain the physic world
+            var domain = new box2dp.Domain({ x: 0, y: 10 }, 0.1);
+
+            var pixiRenderer = new box2dp.PixiRenderer({
+                antialias: true, elementId: "pixiScreen", width: 900, height: 600, transparent: false, backgroundColor: 0xf5f5f5
+            });
+            domain.addRenderer(pixiRenderer);
+            pixiRenderer.drawFlags = box2dp.BaseRenderer.DRAW_SHAPE | box2dp.BaseRenderer.DRAW_CENTER | box2dp.BaseRenderer.DRAW_BOUNDARY;
+            var tcPixi = new box2dp.DragControl(pixiRenderer);
+            tcPixi.createDragDrop();
+
+            //create bottom wall
+            var wallInfo = new box2dp.MakeInfo({
+                x: 450, y: 450, w: 300, h: 30, createType: box2dp.MakeInfo.MAKE_BOX_CENTER, fixedRotation: true, isStatic: true, friction: 0
+            });
+            domain.create(wallInfo);
+
+            //liquid emitter
+            var psd = new box2d.b2ParticleSystemDef();
+            psd.density = 1;
+            psd.gravityScale = 1;
+            psd.radius = 0.2;
+            psd.maxCount = 500;
+            var liquidSys = domain.createParticleSystem(psd, box2dp.MakeInfo.MAKE_CIRCLE, 0x225588, 0.5);
+
+            var particleDef = new box2d.b2ParticleDef();
+            particleDef.flags = box2d.b2ParticleFlag.b2_powderParticle;
+
+            var setting = { x: 450, y: 100, startAngle: 85, angleRange: 10, startVelocityLen: 1 };
+
+            function emit() {
+
+                //start random position from setting x y
+                var tox = setting.x + box2dp.MakeInfo.random(-9, 9);
+                var toy = setting.y + box2dp.MakeInfo.random(0, 15);
+                particleDef.position.Set(box2dp.MakeInfo.div30(tox), box2dp.MakeInfo.div30(toy));
+
+                //angle from 85 ~ 95
+                var randomAng = 0.01745 * (Math.random() * setting.angleRange + setting.startAngle);
+                var force = new box2d.b2Vec2(setting.startVelocityLen, 0);
+                force.SelfRotateAngle(randomAng);
+                particleDef.velocity.Set(box2dp.MakeInfo.round(force.x), box2dp.MakeInfo.round(force.y));
+
+                //add flag b2_fixtureContactFilterParticle to enable contact events on fixture to particle
+                particleDef.flags |= box2d.b2ParticleFlag.b2_fixtureContactListenerParticle;
+                //add flag b2_particleContactListenerParticle to enable contact events on partice to particle
+                particleDef.flags |= box2d.b2ParticleFlag.b2_particleContactListenerParticle;
+                //set life time to 5 second, if the particle still exist on screen it will be removed.
+                particleDef.lifetime = 5;
+
+                var ip = domain.createParticle(liquidSys, particleDef);
+
+                //check for removal, if exceed y position on each particle system
+                for (var t = 0; t < domain.particleSystems.length; t++) {
+                    var loopSystem = domain.particleSystems[t];
+                    var posBuffer = loopSystem.GetPositionBuffer();
+                    //actual amount of the items from  domain.particles[system name] array
+                    var bufferLen = domain.particles[loopSystem.name].length;
+                    for (var p = 0; p < bufferLen; p++) {
+                        if (posBuffer[p].x < 6 || posBuffer[p].x > 22) loopSystem.DestroyParticle(p);
+                    }
+                }
+
+            }
+
+            domain.addEvent(box2dp.Event.PARTICLE_FIXTURE_CONTACT, function (event) {
+                var contactInfo = event.values.contact;
+                var xdir = (Math.random() > .5) ? 4 : -4;
+                liquidSys.GetVelocityBuffer()[contactInfo.index].Set(xdir, -5);
+                fixtureContactCount++;
+                updateTxt();
+            });
+            domain.addEvent(box2dp.Event.PARTICLE_PARTICLE_CONTACT, function (event) {
+                particleContactCount++;
+                updateTxt();
+            });
+
+            setInterval(function () {
+                emit();
+            }, 500);
+
+            domain.run(50, 25);
+
+        }
+
+        function updateTxt() {
+            document.getElementById("txtDiv").innerHTML = "fixtureContactCount: " + fixtureContactCount + "</br>particleContactCount: " + particleContactCount;
+        }
+    </script>
+
+</head>
+<body onload="init();">
+    <div id="pixiScreen"></div>
+    <div id="txtDiv"></div>
+</body>
+</html>

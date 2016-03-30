@@ -1,0 +1,136 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <meta charset="utf-8" />
+    <script src="../../lib/box2d.min.js"></script>
+    <script src="../../lib/pixi.min.js"></script>
+    <script src="../../lib/three.min.js"></script>
+    <script src="../../lib/box2dPlug.min.js"></script>
+    <style>
+        body, html {
+            padding: 5px;
+            margin: 0px;
+            font: 18px sans-serif;
+        }
+
+        h5 {
+            margin: 10px;
+            padding: 0px;
+        }
+
+        .divContent {
+            float: left;
+            width: 450px;
+            height: auto;
+            margin-right: 10px;
+        }
+    </style>
+
+    <script>
+
+        function init() {
+
+            //create a domain object that contain physic world, with gravity {x:0, y:10},  world step time set to 0.1
+            var domain = new box2dp.Domain({ x: 0, y: 10 }, 0.1);
+
+            //add a PixiRenderer in div id "pixiScreen"
+            var pixiRenderer = new box2dp.PixiRenderer({
+                antialias: false, elementId: "pixiScreen", width: 450, height: 500,
+                transparent: false, backgroundColor: 0xF5F5F5
+            });
+            //add pixiRenderer to the domain
+            domain.addRenderer(pixiRenderer);
+            //set pixiRenderer draw everything
+            pixiRenderer.drawFlags = box2dp.BaseRenderer.DRAW_ALL;
+            //enable drag & drop on Pixi.js testing environment
+            var dragDropPixi = new box2dp.DragControl(pixiRenderer);
+            dragDropPixi.createDragDrop();
+
+
+            //add a three.js renderer in div id "threeScreen"
+            var threeRenderer = new box2dp.ThreeRenderer({
+                antialias: false, elementId: "threeScreen", width: 450, height: 500, invertY: true,
+                transparent: false, backgroundColor: 0xF5F5F5
+            });
+
+            // [the the invertY setting on threeRenderer]
+            // Three.js is based on a right-hand coordinate system, which has the y positive value going up.
+            // The y direction on Pixi.js and traditional web, howerver, have y going down as positive direction.
+            // For the sake of consistency, we apply invertY to true to let ThreeRenderer to have Y positive
+            // direction going down as well.
+            // If you use ThreeRenderer only on a 3D scene, you can ignore invertY setting and it would render
+            // with y positive value going up as expected.
+
+
+
+            //add threeRenderer to the domain
+            domain.addRenderer(threeRenderer);
+
+            //set threeRenderer draw everything
+            threeRenderer.drawFlags = box2dp.BaseRenderer.DRAW_ALL;
+
+            //enable drag & drop on three.js testing environment
+            var tcThree = new box2dp.DragControl(threeRenderer);
+            tcThree.createDragDrop();
+
+            //MakeInfo contain the commands of how to create the physic object.
+            //following line create a setting for static wall on top. (for quick web based physic environment, MakeInfo uses pixels based measurement)
+            var wallInfo = new box2dp.MakeInfo({
+                x: 225, y: 15, w: 450, h: 30, createType: box2dp.MakeInfo.MAKE_BOX_CENTER, fixedRotation: true,
+                isStatic: true, friction: 0
+            });
+            //create the physic object in domain
+            domain.create(wallInfo);
+
+            //wallInfo can be reused to create different objects
+            //create other wall at bottom, only need to change the wallInfo.y value, since other values are the same
+            wallInfo.y = 485;
+            domain.create(wallInfo);
+
+            //wall on left & right
+            wallInfo = new box2dp.MakeInfo({
+                x: 15, y: 250, w: 30, h: 500, createType: box2dp.MakeInfo.MAKE_BOX_CENTER, fixedRotation: true,
+                isStatic: true, friction: 0
+            });
+            domain.create(wallInfo);
+            wallInfo.x = 435;
+            domain.create(wallInfo);
+
+            //create a box , angle 0.5236 radians is about 30 degree
+            var boxInfo = new box2dp.MakeInfo({
+                x: 100, y: 100, w: 60, h: 60, angle: 0.5236, restitution: 0.1, createType: box2dp.MakeInfo.MAKE_BOX_CENTER
+            });
+            domain.create(boxInfo);
+
+            //create a circle , following line passing MakeInfo object directly
+            domain.create(new box2dp.MakeInfo({
+                x: 200, y: 100, radius: 30, restitution: 0.1, createType: box2dp.MakeInfo.MAKE_CIRCLE
+            }));
+
+            //create a polygon
+            domain.create(new box2dp.MakeInfo({
+                x: 300, y: 100, restitution: 0.1, createType: box2dp.MakeInfo.MAKE_POLYGON,
+                vertices: [{ x: 0, y: 0 }, { x: 45, y: 50 }, { x: -45, y: 50 }]
+            }));
+
+            //run the simulation , update physics every 50 milliseconds , update rendering every 25 milliseconds
+            domain.run(50, 25);
+
+        }
+
+    </script>
+
+</head>
+<body onload="init();">
+    <div class="divContent">
+        <h5>pixi.js renderer</h5>
+        <div id="pixiScreen"></div>
+    </div>
+    <div class="divContent">
+        <h5>three.js renderer</h5>
+        <div id="threeScreen"></div>
+    </div>
+</body>
+</html>
+

@@ -1,0 +1,112 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <meta charset="utf-8" />
+    <script src="../../lib/box2d.min.js"></script>
+    <script src="../../lib/pixi.min.js"></script>
+    <script src="../../lib/box2dPlug.js"></script>
+    <style>
+        body, html {
+            padding: 0px;
+            margin: 0px;
+        }
+    </style>
+
+    <script>
+
+        function init() {
+              
+            //create a domain that contain the physic world
+            var domain = new box2dp.Domain({ x: 0, y: 10 }, 0.1);
+
+            var pixiRenderer = new box2dp.PixiRenderer({
+                antialias: true, elementId: "pixiScreen", width: 900, height: 500, backgroundColor: 0x333333, transparent:false
+            });
+            domain.addRenderer(pixiRenderer);
+            pixiRenderer.drawFlags = box2dp.BaseRenderer.DRAW_SHAPE | box2dp.BaseRenderer.DRAW_CENTER | box2dp.BaseRenderer.DRAW_BOUNDARY;
+            var tcPixi = new box2dp.DragControl(pixiRenderer);
+            tcPixi.createDragDrop();
+
+            //create static surrounding wall
+            var wallInfo = new box2dp.MakeInfo({
+                x: 450, y: 15, w: 900, h: 30, createType: box2dp.MakeInfo.MAKE_BOX_CENTER, fixedRotation: true, isStatic: true, friction: 0
+            });
+            domain.create(wallInfo);
+            wallInfo.y = 485;
+            wallInfo.h = 30;
+            domain.create(wallInfo);
+            wallInfo.x = 15; wallInfo.y = 250; wallInfo.w = 30; wallInfo.h = 500;
+            domain.create(wallInfo);
+            wallInfo.x = 885;
+            domain.create(wallInfo);
+
+            var psd = new box2d.b2ParticleSystemDef();
+            psd.maxCount = 1000;
+            psd.radius = 0.4;
+            psd.density = 1.2;
+            psd.gravityScale = 1;
+            //create the system by passing definition and display setting
+            var liquidSys = domain.createParticleSystem(psd, box2dp.MakeInfo.MAKE_CIRCLE, 0x225588, 0.75);
+
+
+            //create a elastic liquid group, box shaped
+            var shape = new box2d.b2PolygonShape();
+            shape.SetAsBox(1.5, 2);
+            var gd = new box2d.b2ParticleGroupDef();
+            gd.position = new box2d.b2Vec2(4, 4);
+            gd.groupFlags = box2d.b2ParticleGroupFlag.b2_solidParticleGroup;
+            gd.flags = box2d.b2ParticleFlag.b2_elasticParticle;
+            gd.shape = shape;
+            var group1 = domain.createParticleGroup(liquidSys, gd);
+
+
+            //circle shape, spring group
+            var cirShape = new box2d.b2CircleShape();
+            cirShape.m_radius = 2;
+            var gd2 = new box2d.b2ParticleGroupDef();
+            gd2.position = new box2d.b2Vec2(11, 4);
+            gd2.groupFlags = box2d.b2ParticleGroupFlag.b2_solidParticleGroup;
+            gd2.flags = box2d.b2ParticleFlag.b2_springParticle | box2d.b2ParticleFlag.b2_staticPressureParticle;
+            gd2.shape = cirShape;
+            var group2 = domain.createParticleGroup(liquidSys, gd2);
+
+
+            //rigidParticleGroup
+            shape = new box2d.b2PolygonShape();
+            shape.SetAsBox(2, 1.5);
+            var gd3 = new box2d.b2ParticleGroupDef();
+            gd3.position = new box2d.b2Vec2(18, 4);
+            gd3.groupFlags = box2d.b2ParticleGroupFlag.b2_rigidParticleGroup;
+            gd3.shape = shape;
+            var group3 = domain.createParticleGroup(liquidSys, gd3);
+
+
+            //particle group with different colors
+            var gd4 = new box2d.b2ParticleGroupDef();
+            gd4.position = new box2d.b2Vec2(25, 4);
+            gd4.groupFlags = box2d.b2ParticleGroupFlag.b2_solidParticleGroup;
+            gd4.flags = box2d.b2ParticleFlag.b2_springParticle | box2d.b2ParticleFlag.b2_staticPressureParticle;
+            cirShape.m_radius = 1.5;
+            gd4.shape = cirShape;
+            //add callback function before creating particles in group,
+            //used to change alter individual particle settings such as color.
+            var group4 = domain.createParticleGroup(liquidSys, gd4, function (ip) {
+                ip.uniqueAlpha = 0.5;
+                ip.uniqueColor = Math.floor(Math.random() * 16777215);
+                console.log(ip);
+            });
+
+            domain.run(50, 25);
+
+        }
+
+    </script>
+
+</head>
+<body onload="init();">
+    <div id="pixiScreen"></div>
+</body>
+</html>
+
+

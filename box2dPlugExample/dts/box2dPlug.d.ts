@@ -7,33 +7,8 @@ declare module box2dp {
         LINE_CENTER_X: number;
         LINE_CENTER_Y: number;
         LINE_BOUNDARY: number;
-        PATH_LINE: number;
-        PATH_LINEA: number;
-        PATH_FORCE: number;
-        PATH_FORCEA: number;
-        SELECTION_LINE_SIZE: number;
-        SELECTION_LINE_COLOR: number;
-        SELECTION_LINE_ALPHA: number;
-        VELOCITY: number;
-        VELOCITY_ALPHA: number;
-        ALIGNMENT: number;
-        ALIGNMENT_ALPHA: number;
-        COHESION: number;
-        COHESION_ALPHA: number;
-        SEPARATION: number;
-        SEPARATION_ALPHA: number;
-        RAYCAST: number;
-        RAYCAST_ALPHA: number;
-        AVOID_SHAPE: number;
-        AVOID_SHAPE_ALPHA: number;
-        GRID: number;
-        GRID_ALPHA: number;
         SENSOR: number;
         SENSOR_ALPHA: number;
-        BOUND: number;
-        BOUND_ALPHA: number;
-        WANDER: number;
-        WANDER_ALPHA: number;
         QUADTREE: number;
         QUADTREE_A: number;
         LINE_JOINT: number;
@@ -179,7 +154,7 @@ declare module box2dp {
         private boundaryMult;
         display: any;
         selector: QuadSelector;
-        constructor(b2body: box2d.b2Body, type: number, name?: string);
+        constructor(b2body: box2d.b2Body, name?: string);
         setOldPos(): void;
         setCurrentPos(): void;
         integratePos(percent: number): void;
@@ -270,38 +245,6 @@ declare module box2dp {
     }
 }
 declare module box2dp {
-    class DragControl {
-        private domain;
-        private world;
-        private useElement;
-        private renderer;
-        mouseJoint: any;
-        trackCtrl: THREE.TrackballControls;
-        orbCtrl: THREE.OrbitControls;
-        private mousePt;
-        private tweenPt;
-        private dragging;
-        constructor(renderer: BaseRenderer);
-        createDragDrop(): void;
-        removeDragDrop(): void;
-        private createPixiDragDrop();
-        private ddPress(e);
-        private ddMove(e);
-        private ddUp(e);
-        private tjPress(e);
-        private createThreeDragDrop();
-        private tjMove(e);
-        private tjUp(e);
-        trackCtrlUpdate(e: Event, caller: DragControl): void;
-        createTrackBallCtrl(): void;
-        removeTrackBallCtrl(): void;
-        orbitCtrlUpdate(e: Event, caller: DragControl): void;
-        createOrbitCtrl(): void;
-        removeOrbitCtrl(): void;
-        beforeStepUpdate(): void;
-    }
-}
-declare module box2dp {
     class BoxMaker {
         world: box2d.b2World;
         domain: Domain;
@@ -343,7 +286,6 @@ declare module box2dp {
         static MAKE_COMPOUND: number;
         static MAKE_CHAIN: number;
         name: string;
-        itemType: number;
         x: number;
         y: number;
         w: number;
@@ -377,7 +319,6 @@ declare module box2dp {
         chainOverlap: number;
         constructor(setting: {
             name?: string;
-            itemType?: number;
             x?: number;
             y?: number;
             w?: number;
@@ -447,6 +388,38 @@ declare module box2dp {
         onParticleSystemCreate(system: box2d.b2ParticleSystem, shapeType: number, color: number, alpha: number): void;
         onParticleCreate(item: ItemParticle): void;
         onParticleDestroy(removeOne: ItemParticle): void;
+    }
+}
+declare module box2dp {
+    class DragControl {
+        private domain;
+        private world;
+        private useElement;
+        private renderer;
+        mouseJoint: any;
+        trackCtrl: THREE.TrackballControls;
+        orbCtrl: THREE.OrbitControls;
+        private mousePt;
+        private tweenPt;
+        private dragging;
+        constructor(renderer: BaseRenderer);
+        createDragDrop(): void;
+        removeDragDrop(): void;
+        private createPixiDragDrop();
+        private ddPress(e);
+        private ddMove(e);
+        private ddUp(e);
+        private tjPress(e);
+        private createThreeDragDrop();
+        private tjMove(e);
+        private tjUp(e);
+        trackCtrlUpdate(e: Event, caller: DragControl): void;
+        createTrackBallCtrl(): void;
+        removeTrackBallCtrl(): void;
+        orbitCtrlUpdate(e: Event, caller: DragControl): void;
+        createOrbitCtrl(): void;
+        removeOrbitCtrl(): void;
+        beforeStepUpdate(): void;
     }
 }
 declare module box2dp {

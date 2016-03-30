@@ -8,33 +8,8 @@ var box2dp;
             this.LINE_CENTER_X = 0xffb9b2;
             this.LINE_CENTER_Y = 0xc3ffb2;
             this.LINE_BOUNDARY = 0xBBBBBB;
-            this.PATH_LINE = 0x9650A0;
-            this.PATH_LINEA = 0.4;
-            this.PATH_FORCE = 0xde7717;
-            this.PATH_FORCEA = 0.4;
-            this.SELECTION_LINE_SIZE = 1;
-            this.SELECTION_LINE_COLOR = 0xEFEFEF;
-            this.SELECTION_LINE_ALPHA = .4;
-            this.VELOCITY = 0xFFFFFF;
-            this.VELOCITY_ALPHA = 0.6;
-            this.ALIGNMENT = 0x50825A;
-            this.ALIGNMENT_ALPHA = 0.3;
-            this.COHESION = 0x5A8282;
-            this.COHESION_ALPHA = 0.3;
-            this.SEPARATION = 0xE65050;
-            this.SEPARATION_ALPHA = 0.3;
-            this.RAYCAST = 0xFFFFFF;
-            this.RAYCAST_ALPHA = 0.1;
-            this.AVOID_SHAPE = 0xCC6666;
-            this.AVOID_SHAPE_ALPHA = 1;
-            this.GRID = 0x66FFFF;
-            this.GRID_ALPHA = 0.1;
             this.SENSOR = 0xFFDD88;
             this.SENSOR_ALPHA = 0.3;
-            this.BOUND = 0x55CCCC;
-            this.BOUND_ALPHA = 0.5;
-            this.WANDER = 0x969696;
-            this.WANDER_ALPHA = 0.3;
             this.QUADTREE = 0x55CCCC;
             this.QUADTREE_A = 0.8;
             this.LINE_JOINT = 0xCC3300;
@@ -47,33 +22,8 @@ var box2dp;
             color.LINE_CENTER_X = 0xFFAD99;
             color.LINE_CENTER_Y = 0xADFF99;
             color.LINE_BOUNDARY = 0x6F586F;
-            color.PATH_LINE = 0x9650A0;
-            color.PATH_LINEA = 0.4;
-            color.PATH_FORCE = 0xde7717;
-            color.PATH_FORCEA = 0.4;
-            color.SELECTION_LINE_SIZE = 1;
-            color.SELECTION_LINE_COLOR = 0xEFEFEF;
-            color.SELECTION_LINE_ALPHA = .4;
-            color.VELOCITY = 0xFFFFFF;
-            color.VELOCITY_ALPHA = 0.6;
-            color.ALIGNMENT = 0x50825A;
-            color.ALIGNMENT_ALPHA = 0.3;
-            color.COHESION = 0x5A8282;
-            color.COHESION_ALPHA = 0.3;
-            color.SEPARATION = 0xE65050;
-            color.SEPARATION_ALPHA = 0.3;
-            color.RAYCAST = 0xFFFFFF;
-            color.RAYCAST_ALPHA = 0.1;
-            color.AVOID_SHAPE = 0xCC6666;
-            color.AVOID_SHAPE_ALPHA = 1;
-            color.GRID = 0x66FFFF;
-            color.GRID_ALPHA = 0.1;
             color.SENSOR = 0xFFDD88;
             color.SENSOR_ALPHA = 0.3;
-            color.BOUND = 0x55CCCC;
-            color.BOUND_ALPHA = 0.5;
-            color.WANDER = 0x969696;
-            color.WANDER_ALPHA = 0.3;
             color.QUADTREE = 0x55CCCC;
             color.QUADTREE_A = 0.2;
             return color;
@@ -100,10 +50,10 @@ var box2dp;
             return new THREE.MeshBasicMaterial({ color: this.SENSOR, side: THREE.DoubleSide, opacity: this.SENSOR_ALPHA, transparent: true });
         };
         Color.prototype.getLineCenterXMat = function () {
-            return new THREE.LineBasicMaterial({ color: this.LINE_CENTER_X });
+            return new THREE.LineBasicMaterial({ color: this.LINE_CENTER_X, opacity: 1 });
         };
         Color.prototype.getLineCenterYMat = function () {
-            return new THREE.LineBasicMaterial({ color: this.LINE_CENTER_Y });
+            return new THREE.LineBasicMaterial({ color: this.LINE_CENTER_Y, opacity: 1 });
             ;
         };
         Color.prototype.getLineBoundary = function () {
@@ -279,7 +229,7 @@ var box2dp;
             else {
                 name = this.getUniqueName(name);
             }
-            var newItem = new box2dp.ItemEntity(this.maker.create(makeInfo), makeInfo.itemType, name);
+            var newItem = new box2dp.ItemEntity(this.maker.create(makeInfo), name);
             if (makeInfo.isSensor)
                 newItem.isSensor = true;
             this.items.push(newItem);
@@ -621,11 +571,10 @@ var box2dp;
 (function (box2dp) {
     var ItemEntity = (function (_super) {
         __extends(ItemEntity, _super);
-        function ItemEntity(b2body, type, name) {
+        function ItemEntity(b2body, name) {
             _super.call(this, name);
             this.enableContactEvent = false;
             this.enableSolveEvent = false;
-            this.type = type;
             this.b2body = b2body;
             this.b2body.item = this;
             this.dynamic = (this.b2body.GetType() === box2d.b2BodyType.b2_dynamicBody);
@@ -947,193 +896,6 @@ var box2dp;
 })(box2dp || (box2dp = {}));
 var box2dp;
 (function (box2dp) {
-    var DragControl = (function () {
-        function DragControl(renderer) {
-            var _this = this;
-            this.dragging = false;
-            this.domain = renderer.domain;
-            this.world = this.domain.world;
-            this.renderer = renderer;
-            this.domain.addEvent(box2dp.Event.BEFORE_STEP, this["beforeStep"] = function (e) { _this.beforeStepUpdate(); });
-        }
-        DragControl.prototype.createDragDrop = function () {
-            if (this.renderer.constructor === box2dp.PixiRenderer) {
-                this.createPixiDragDrop();
-            }
-            if (this.renderer.constructor === box2dp.ThreeRenderer) {
-                this.createThreeDragDrop();
-            }
-        };
-        DragControl.prototype.removeDragDrop = function () {
-            this.renderer.useElement.removeEventListener("mousedown", this["mousedownObj"]);
-            document.removeEventListener("mousemove", this["mouseMoveObj"]);
-            document.removeEventListener("mouseup", this["mouseUpObj"]);
-        };
-        DragControl.prototype.createPixiDragDrop = function () {
-            var _this = this;
-            this.renderer.useElement.addEventListener("mousedown", this["mousedownObj"] = function (e) { _this.ddPress(e); });
-        };
-        DragControl.prototype.ddPress = function (e) {
-            var _this = this;
-            var lx = box2dp.MakeInfo.round((e.pageX - this.renderer.useElement.offsetLeft) / 30);
-            var ly = box2dp.MakeInfo.round((e.pageY - this.renderer.useElement.offsetTop) / 30);
-            this.mousePt = new box2d.b2Vec2(lx, ly);
-            this.tweenPt = new box2d.b2Vec2(lx, ly);
-            this.dragging = true;
-            var items = this.domain.itemUnderPoint(lx, ly);
-            if (items.length > 0) {
-                var clickBody = items[0].GetBody();
-                var mjDef = new box2d.b2MouseJointDef();
-                mjDef.bodyA = this.domain.groundBody;
-                mjDef.bodyB = clickBody;
-                mjDef.target.Copy(new box2d.b2Vec2(lx, ly));
-                mjDef.maxForce = 1000 * clickBody.GetMass();
-                this.mouseJoint = this.domain.world.CreateJoint(mjDef);
-                clickBody.SetAwake(true);
-            }
-            document.addEventListener("mousemove", this["mouseMoveObj"] = function (e) { _this.ddMove(e); });
-            document.addEventListener("mouseup", this["mouseUpObj"] = function (e) { _this.ddUp(e); });
-        };
-        DragControl.prototype.ddMove = function (e) {
-            var lx = box2dp.MakeInfo.round((e.pageX - this.renderer.useElement.offsetLeft) / 30);
-            var ly = box2dp.MakeInfo.round((e.pageY - this.renderer.useElement.offsetTop) / 30);
-            if (this.mouseJoint) {
-                this.mouseJoint.SetTarget(new box2d.b2Vec2(lx, ly));
-            }
-            this.mousePt = new box2d.b2Vec2(lx, ly);
-        };
-        DragControl.prototype.ddUp = function (e) {
-            if (this.mouseJoint) {
-                this.domain.world.DestroyJoint(this.mouseJoint);
-                this.mouseJoint = null;
-            }
-            this.dragging = false;
-            document.removeEventListener("mousemove", this["mouseMoveObj"]);
-            document.removeEventListener("mouseup", this["mouseUpObj"]);
-        };
-        DragControl.prototype.tjPress = function (e) {
-            var _this = this;
-            var mx = e.pageX - this.renderer.useElement.offsetLeft;
-            var my = e.pageY - this.renderer.useElement.offsetTop;
-            var mousePt = this.renderer.getXYFromCamera(mx, my);
-            var lx = box2dp.MakeInfo.round(mousePt.x / 30);
-            var ly = box2dp.MakeInfo.round(mousePt.y / 30);
-            this.mousePt = new box2d.b2Vec2(lx, ly);
-            this.tweenPt = new box2d.b2Vec2(lx, ly);
-            this.dragging = true;
-            var items = this.domain.itemUnderPoint(lx, ly);
-            if (items.length > 0) {
-                var clickBody = items[0].GetBody();
-                var mjDef = new box2d.b2MouseJointDef();
-                mjDef.bodyA = this.domain.groundBody;
-                mjDef.bodyB = clickBody;
-                mjDef.target.Copy(new box2d.b2Vec2(lx, ly));
-                mjDef.maxForce = 1000 * clickBody.GetMass();
-                this.mouseJoint = this.domain.world.CreateJoint(mjDef);
-                clickBody.SetAwake(true);
-            }
-            document.addEventListener("mousemove", this["mouseMoveObj"] = function (e) { _this.tjMove(e); });
-            document.addEventListener("mouseup", this["mouseUpObj"] = function (e) { _this.tjUp(e); });
-        };
-        DragControl.prototype.createThreeDragDrop = function () {
-            var _this = this;
-            this.renderer.useElement.addEventListener("mousedown", this["mousedownObj"] = function (e) { _this.tjPress(e); });
-        };
-        DragControl.prototype.tjMove = function (e) {
-            var mx = e.pageX - this.renderer.useElement.offsetLeft;
-            var my = e.pageY - this.renderer.useElement.offsetTop;
-            var mousePt = this.renderer.getXYFromCamera(mx, my);
-            var lx = box2dp.MakeInfo.round(mousePt.x / 30);
-            var ly = box2dp.MakeInfo.round(mousePt.y / 30);
-            this.mousePt = new box2d.b2Vec2(lx, ly);
-            if (this.mouseJoint) {
-                this.mouseJoint.SetTarget(new box2d.b2Vec2(lx, ly));
-            }
-        };
-        DragControl.prototype.tjUp = function (e) {
-            if (this.mouseJoint) {
-                this.domain.world.DestroyJoint(this.mouseJoint);
-                this.mouseJoint = null;
-            }
-            document.removeEventListener("mousemove", this["mouseMoveObj"]);
-            document.removeEventListener("mouseup", this["mouseUpObj"]);
-            this.dragging = false;
-        };
-        DragControl.prototype.trackCtrlUpdate = function (e, caller) {
-            caller.trackCtrl.update(e.values * 50);
-        };
-        DragControl.prototype.createTrackBallCtrl = function () {
-            var tr = this.renderer;
-            tr.camera.position.x = 0;
-            tr.camera.position.y = 0;
-            this.trackCtrl = new THREE.TrackballControls(tr.camera, tr.useElement);
-            this.trackCtrl.rotateSpeed = 2.0;
-            this.trackCtrl.zoomSpeed = 2.0;
-            this.trackCtrl.panSpeed = 2.0;
-            this.trackCtrl.dynamicDampingFactor = 0.3;
-            this.trackCtrl.staticMoving = true;
-            var offset = new THREE.Vector3(tr.options.width * .5, -tr.options.height * .5, 0);
-            this.trackCtrl.object.position.add(offset);
-            this.trackCtrl.target.add(offset);
-            this.domain.addEvent(box2dp.Event.AFTER_RENDER, this.trackCtrlUpdate, this);
-        };
-        DragControl.prototype.removeTrackBallCtrl = function () {
-            this.domain.removeEvent(box2dp.Event.AFTER_RENDER, this.trackCtrlUpdate);
-            if (this.trackCtrl) {
-                this.trackCtrl.enabled = false;
-                this.trackCtrl = undefined;
-            }
-        };
-        DragControl.prototype.orbitCtrlUpdate = function (e, caller) {
-            caller.orbCtrl.update();
-        };
-        DragControl.prototype.createOrbitCtrl = function () {
-            var tr = this.renderer;
-            this.orbCtrl = new THREE.OrbitControls(tr.camera, tr.useElement);
-            this.orbCtrl.enableDamping = true;
-            this.orbCtrl.dampingFactor = 0.2;
-            var offset = new THREE.Vector3(tr.options.width * .5, -tr.options.height * .5, 0);
-            this.orbCtrl.target = offset;
-            this.domain.addEvent(box2dp.Event.AFTER_RENDER, this.orbitCtrlUpdate, this);
-        };
-        DragControl.prototype.removeOrbitCtrl = function () {
-            this.domain.removeEvent(box2dp.Event.AFTER_RENDER, this.orbitCtrlUpdate);
-            if (this.orbCtrl) {
-                this.orbCtrl.enabled = false;
-                this.orbCtrl = undefined;
-            }
-        };
-        DragControl.prototype.beforeStepUpdate = function () {
-            if (this.renderer.domain.particleSystems.length > 0 && this.dragging) {
-                var xDiff = (this.mousePt.x - this.tweenPt.x) * .5;
-                var yDiff = (this.mousePt.y - this.tweenPt.y) * .5;
-                this.tweenPt.x += xDiff;
-                this.tweenPt.y += yDiff;
-                var dragForce = new box2d.b2Vec2(xDiff, yDiff);
-                dragForce.SelfMul(50);
-                var qcb = new QueryCallBack();
-                var aabb = new box2d.b2AABB();
-                aabb.lowerBound.Set(this.tweenPt.x - 1, this.tweenPt.y - 1);
-                aabb.upperBound.Set(this.tweenPt.x + 1, this.tweenPt.y + 1);
-                this.domain.world.QueryAABB(qcb, aabb);
-                var plen = qcb.particleData.length;
-                if (plen > 0) {
-                    for (var k = 0; k < plen; k++) {
-                        var atIndex = qcb.particleData[k].index;
-                        var system = qcb.particleData[k].system;
-                        var pt = system.GetPositionBuffer()[atIndex];
-                        var v = system.GetVelocityBuffer()[atIndex];
-                        v.Copy(dragForce);
-                    }
-                }
-            }
-        };
-        return DragControl;
-    })();
-    box2dp.DragControl = DragControl;
-})(box2dp || (box2dp = {}));
-var box2dp;
-(function (box2dp) {
     var BoxMaker = (function () {
         function BoxMaker(world, domain) {
             this.world = world;
@@ -1326,7 +1088,7 @@ var box2dp;
             return body;
         };
         BoxMaker.prototype.createItemEntity = function (makeInfo, name) {
-            var newItem = new box2dp.ItemEntity(this.create(makeInfo), makeInfo.itemType, name);
+            var newItem = new box2dp.ItemEntity(this.create(makeInfo), name);
             this.domain.items.push(newItem);
             for (var p = 0; p < this.domain.rlen; p++)
                 this.domain.renderers[p].onItemCreate(newItem);
@@ -1635,6 +1397,193 @@ var box2dp;
         return BaseRenderer;
     })();
     box2dp.BaseRenderer = BaseRenderer;
+})(box2dp || (box2dp = {}));
+var box2dp;
+(function (box2dp) {
+    var DragControl = (function () {
+        function DragControl(renderer) {
+            var _this = this;
+            this.dragging = false;
+            this.domain = renderer.domain;
+            this.world = this.domain.world;
+            this.renderer = renderer;
+            this.domain.addEvent(box2dp.Event.BEFORE_STEP, this["beforeStep"] = function (e) { _this.beforeStepUpdate(); });
+        }
+        DragControl.prototype.createDragDrop = function () {
+            if (this.renderer instanceof box2dp.PixiRenderer) {
+                this.createPixiDragDrop();
+            }
+            if (this.renderer instanceof box2dp.ThreeRenderer) {
+                this.createThreeDragDrop();
+            }
+        };
+        DragControl.prototype.removeDragDrop = function () {
+            this.renderer.useElement.removeEventListener("mousedown", this["mousedownObj"]);
+            document.removeEventListener("mousemove", this["mouseMoveObj"]);
+            document.removeEventListener("mouseup", this["mouseUpObj"]);
+        };
+        DragControl.prototype.createPixiDragDrop = function () {
+            var _this = this;
+            this.renderer.useElement.addEventListener("mousedown", this["mousedownObj"] = function (e) { _this.ddPress(e); });
+        };
+        DragControl.prototype.ddPress = function (e) {
+            var _this = this;
+            var lx = box2dp.MakeInfo.round((e.pageX - this.renderer.useElement.offsetLeft) / 30);
+            var ly = box2dp.MakeInfo.round((e.pageY - this.renderer.useElement.offsetTop) / 30);
+            this.mousePt = new box2d.b2Vec2(lx, ly);
+            this.tweenPt = new box2d.b2Vec2(lx, ly);
+            this.dragging = true;
+            var items = this.domain.itemUnderPoint(lx, ly);
+            if (items.length > 0) {
+                var clickBody = items[0].GetBody();
+                var mjDef = new box2d.b2MouseJointDef();
+                mjDef.bodyA = this.domain.groundBody;
+                mjDef.bodyB = clickBody;
+                mjDef.target.Copy(new box2d.b2Vec2(lx, ly));
+                mjDef.maxForce = 1000 * clickBody.GetMass();
+                this.mouseJoint = this.domain.world.CreateJoint(mjDef);
+                clickBody.SetAwake(true);
+            }
+            document.addEventListener("mousemove", this["mouseMoveObj"] = function (e) { _this.ddMove(e); });
+            document.addEventListener("mouseup", this["mouseUpObj"] = function (e) { _this.ddUp(e); });
+        };
+        DragControl.prototype.ddMove = function (e) {
+            var lx = box2dp.MakeInfo.round((e.pageX - this.renderer.useElement.offsetLeft) / 30);
+            var ly = box2dp.MakeInfo.round((e.pageY - this.renderer.useElement.offsetTop) / 30);
+            if (this.mouseJoint) {
+                this.mouseJoint.SetTarget(new box2d.b2Vec2(lx, ly));
+            }
+            this.mousePt = new box2d.b2Vec2(lx, ly);
+        };
+        DragControl.prototype.ddUp = function (e) {
+            if (this.mouseJoint) {
+                this.domain.world.DestroyJoint(this.mouseJoint);
+                this.mouseJoint = null;
+            }
+            this.dragging = false;
+            document.removeEventListener("mousemove", this["mouseMoveObj"]);
+            document.removeEventListener("mouseup", this["mouseUpObj"]);
+        };
+        DragControl.prototype.tjPress = function (e) {
+            var _this = this;
+            var mx = e.pageX - this.renderer.useElement.offsetLeft;
+            var my = e.pageY - this.renderer.useElement.offsetTop;
+            var mousePt = this.renderer.getXYFromCamera(mx, my);
+            var lx = box2dp.MakeInfo.round(mousePt.x / 30);
+            var ly = box2dp.MakeInfo.round(mousePt.y / 30);
+            this.mousePt = new box2d.b2Vec2(lx, ly);
+            this.tweenPt = new box2d.b2Vec2(lx, ly);
+            this.dragging = true;
+            var items = this.domain.itemUnderPoint(lx, ly);
+            if (items.length > 0) {
+                var clickBody = items[0].GetBody();
+                var mjDef = new box2d.b2MouseJointDef();
+                mjDef.bodyA = this.domain.groundBody;
+                mjDef.bodyB = clickBody;
+                mjDef.target.Copy(new box2d.b2Vec2(lx, ly));
+                mjDef.maxForce = 1000 * clickBody.GetMass();
+                this.mouseJoint = this.domain.world.CreateJoint(mjDef);
+                clickBody.SetAwake(true);
+            }
+            document.addEventListener("mousemove", this["mouseMoveObj"] = function (e) { _this.tjMove(e); });
+            document.addEventListener("mouseup", this["mouseUpObj"] = function (e) { _this.tjUp(e); });
+        };
+        DragControl.prototype.createThreeDragDrop = function () {
+            var _this = this;
+            this.renderer.useElement.addEventListener("mousedown", this["mousedownObj"] = function (e) { _this.tjPress(e); });
+        };
+        DragControl.prototype.tjMove = function (e) {
+            var mx = e.pageX - this.renderer.useElement.offsetLeft;
+            var my = e.pageY - this.renderer.useElement.offsetTop;
+            var mousePt = this.renderer.getXYFromCamera(mx, my);
+            var lx = box2dp.MakeInfo.round(mousePt.x / 30);
+            var ly = box2dp.MakeInfo.round(mousePt.y / 30);
+            this.mousePt = new box2d.b2Vec2(lx, ly);
+            if (this.mouseJoint) {
+                this.mouseJoint.SetTarget(new box2d.b2Vec2(lx, ly));
+            }
+        };
+        DragControl.prototype.tjUp = function (e) {
+            if (this.mouseJoint) {
+                this.domain.world.DestroyJoint(this.mouseJoint);
+                this.mouseJoint = null;
+            }
+            document.removeEventListener("mousemove", this["mouseMoveObj"]);
+            document.removeEventListener("mouseup", this["mouseUpObj"]);
+            this.dragging = false;
+        };
+        DragControl.prototype.trackCtrlUpdate = function (e, caller) {
+            caller.trackCtrl.update(e.values * 50);
+        };
+        DragControl.prototype.createTrackBallCtrl = function () {
+            var tr = this.renderer;
+            tr.camera.position.x = 0;
+            tr.camera.position.y = 0;
+            this.trackCtrl = new THREE.TrackballControls(tr.camera, tr.useElement);
+            this.trackCtrl.rotateSpeed = 2.0;
+            this.trackCtrl.zoomSpeed = 2.0;
+            this.trackCtrl.panSpeed = 2.0;
+            this.trackCtrl.dynamicDampingFactor = 0.3;
+            this.trackCtrl.staticMoving = true;
+            var offset = new THREE.Vector3(tr.options.width * .5, -tr.options.height * .5, 0);
+            this.trackCtrl.object.position.add(offset);
+            this.trackCtrl.target.add(offset);
+            this.domain.addEvent(box2dp.Event.AFTER_RENDER, this.trackCtrlUpdate, this);
+        };
+        DragControl.prototype.removeTrackBallCtrl = function () {
+            this.domain.removeEvent(box2dp.Event.AFTER_RENDER, this.trackCtrlUpdate);
+            if (this.trackCtrl) {
+                this.trackCtrl.enabled = false;
+                this.trackCtrl = undefined;
+            }
+        };
+        DragControl.prototype.orbitCtrlUpdate = function (e, caller) {
+            caller.orbCtrl.update();
+        };
+        DragControl.prototype.createOrbitCtrl = function () {
+            var tr = this.renderer;
+            this.orbCtrl = new THREE.OrbitControls(tr.camera, tr.useElement);
+            this.orbCtrl.enableDamping = true;
+            this.orbCtrl.dampingFactor = 0.2;
+            var offset = new THREE.Vector3(tr.options.width * .5, -tr.options.height * .5, 0);
+            this.orbCtrl.target = offset;
+            this.domain.addEvent(box2dp.Event.AFTER_RENDER, this.orbitCtrlUpdate, this);
+        };
+        DragControl.prototype.removeOrbitCtrl = function () {
+            this.domain.removeEvent(box2dp.Event.AFTER_RENDER, this.orbitCtrlUpdate);
+            if (this.orbCtrl) {
+                this.orbCtrl.enabled = false;
+                this.orbCtrl = undefined;
+            }
+        };
+        DragControl.prototype.beforeStepUpdate = function () {
+            if (this.renderer.domain.particleSystems.length > 0 && this.dragging) {
+                var xDiff = (this.mousePt.x - this.tweenPt.x) * .5;
+                var yDiff = (this.mousePt.y - this.tweenPt.y) * .5;
+                this.tweenPt.x += xDiff;
+                this.tweenPt.y += yDiff;
+                var dragForce = new box2d.b2Vec2(xDiff, yDiff);
+                dragForce.SelfMul(50);
+                var qcb = new QueryCallBack();
+                var aabb = new box2d.b2AABB();
+                aabb.lowerBound.Set(this.tweenPt.x - 1, this.tweenPt.y - 1);
+                aabb.upperBound.Set(this.tweenPt.x + 1, this.tweenPt.y + 1);
+                this.domain.world.QueryAABB(qcb, aabb);
+                var plen = qcb.particleData.length;
+                if (plen > 0) {
+                    for (var k = 0; k < plen; k++) {
+                        var atIndex = qcb.particleData[k].index;
+                        var system = qcb.particleData[k].system;
+                        var pt = system.GetPositionBuffer()[atIndex];
+                        var v = system.GetVelocityBuffer()[atIndex];
+                        v.Copy(dragForce);
+                    }
+                }
+            }
+        };
+        return DragControl;
+    })();
+    box2dp.DragControl = DragControl;
 })(box2dp || (box2dp = {}));
 var box2dp;
 (function (box2dp) {
@@ -2105,15 +2054,15 @@ var box2dp;
             var ctx = box2dp.MakeInfo.mult30(it.b2body.GetLocalCenter().x);
             var cty = box2dp.MakeInfo.mult30(it.b2body.GetLocalCenter().y);
             var geometry = new THREE.Geometry();
-            geometry.vertices.push(new THREE.Vector3(ctx, cty, 0), new THREE.Vector3(ctx + 8, cty, 0));
+            geometry.vertices.push(new THREE.Vector3(ctx, cty, 1), new THREE.Vector3(ctx + 8, cty, 0));
             var line = new THREE.Line(geometry, this.colorClass.getLineCenterXMat());
             line.name = "clx";
-            display.add(line);
+            shape3d.add(line);
             geometry = new THREE.Geometry();
-            geometry.vertices.push(new THREE.Vector3(ctx, cty, 0), new THREE.Vector3(ctx, cty + 8, 0));
+            geometry.vertices.push(new THREE.Vector3(ctx, cty, 1), new THREE.Vector3(ctx, cty + 8, 0));
             var line = new THREE.Line(geometry, this.colorClass.getLineCenterYMat());
             line.name = "cly";
-            display.add(line);
+            shape3d.add(line);
             var bd = item.getBoundary(true, true);
             geometry = new THREE.Geometry();
             geometry.vertices.push(new THREE.Vector3(bd.x, bd.y, 0), new THREE.Vector3(bd.x + bd.w, bd.y, 0), new THREE.Vector3(bd.x + bd.w, bd.y + bd.h, 0), new THREE.Vector3(bd.x, bd.y + bd.h, 0), new THREE.Vector3(bd.x, bd.y, 0));
